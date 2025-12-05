@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify, send_file
+from flask import Flask, Response, request, jsonify, send_file,render_template
 import subprocess
 import json
 import requests
@@ -103,10 +103,16 @@ def stream_video(video_id):
     response=Response(generate(),status=resp.status_code)
     response.headers['Content-Type']=resp.headers.get('Content-Type','vieo/mp4')
     response.headers['Accept-Ranges']='bytes'
+    if 'Content-Range' in resp.headers:
+        response.headers['Content-Range'] = resp.headers['Content-Range']
+    if 'Content-Length' in resp.headers:
+        response.headers['Content-Length'] = resp.headers['Content-Length']
+    
+    return response
 
 @app.route('/')
 def index():
-    return send_file('index.html')
+    return render_template('index.html')
 
 
 
