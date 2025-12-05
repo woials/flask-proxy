@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+<section class="container">
+    <div class="search-bar">
+        <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
+        <button onclick="search()">検索</button>
+    </div>
+</section>
+
+<script src="{{url_for('static',filename='script.js')}}"></script>
+</body>
+
+</html>
