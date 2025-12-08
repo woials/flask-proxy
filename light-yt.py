@@ -9,13 +9,15 @@ app = Flask(__name__)
 
 #動画を検索する関数
 def search_videos(query,max_result=20):
+    quoted_query=f'"{query}"'
     #コマンドを組み立て
     cmd=[
         'yt-dlp',
         '-j',
         '--flat-playlist',
-        f'ytsearch{max_result}:{query}'
+        f'ytsearch{max_result}:{quoted_query}'
     ]
+    print(f"DEBUG: Executing yt-dlp command: {' '.join(cmd)}")
     #コマンドを実行
     result=subprocess.run(cmd,capture_output=True,text=True)
     videos=[]
