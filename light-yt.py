@@ -23,10 +23,15 @@ def search_videos(query,max_result=20):
     for line in result.stdout.strip().split('\n'):
         if line:#もし検索結果があれば
             data=json.loads(line)#jsonに変換
+            video_id=data.get('id')
             videos.append({
-                'id':data.get('id'),
+                'id':video_id,
                 'title': data.get('title'),
-                'thumbnail': data.get('thumbnail'),
+                #--flat-playlistがないと、動画を検索➡動画ID取得➡各動画の詳細取得を最大クエリ数まで繰り返す
+                #--flat-playlistがあるとサムネイルが取得できないが、サムネイルの配信URLは決まっているので、
+                #ID+サムネイルURLを使ってサムネイルを取得する
+                #わざわざサムネイルを取得するために通信する必要がない(ただアクセスすればいい)ので検索を高速化できる！                
+                'thumbnail': f'https://i.ytimg.com/vi/{video_id}/hqdefault.jpg',
                 'description': data.get('description'),
                 'duration': data.get('duration'),
                 'uploader': data.get('uploader'),
