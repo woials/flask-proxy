@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask製Youtube Player</title>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/style.css')}}">
+</head>
+
+<body>
+<section class="container">
+    <div class="search-bar">
+        <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
+        <button onclick="search()">検索</button>
+    </div>
+
+    <div class="main-content">
+        <div class="video-player hidden" id="playerSection">
+            <video id="videoPlayer" controls></video>
+            <div class="video-info">
+                <h2 id="videoTitle"></h2>
+                <small id="videoUploader"></small>
+                <p id="videoDescription"></p>
+            </div>
+        </div>
+        <div class="sidebar">
+            <h3 id="slidebarTitle">検索結果</h3>
+            <div class="results" id="results"></div>
+        </div>
+    </div>
+</section>
+
+<script src="{{url_for('static',filename='js/script.js')}}"></script>
+</body>
+
+</html>

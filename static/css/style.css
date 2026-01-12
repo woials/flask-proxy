@@ -1,0 +1,157 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+:root{
+    --primary-red:#cc0000;
+    --primary-red-hover:#ff0000;
+
+    --bg-color:#181818;
+    --surface-color:#121212;
+    --border-color:#303030;
+    --text-color:#fff;
+    --text-color-light:#aaa;
+    --item-hover-bg:#303030;
+}
+/*ライトモードの時は変数を書き換え*/
+@media(prefers-color-scheme: light){
+    :root{
+      --bg-color: #f9f9f9;
+        --surface-color: #ffffff;
+        --border-color: #ccc;
+        --text-color: #0f0f0f;
+        --text-color-light: #606060;
+        --item-hover-bg: #e0e0e0; 
+    }
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: var(--bg-color);
+    color:var(--text-color);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#searchBox {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--text-color);
+    border-radius: 4px;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    background: var(--primary-red);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--primary-red-hover);
+}
+
+.main-content {
+    display: flex;
+    gap: 20px;
+}
+
+.video-player {
+    flex: 2;
+}
+
+video {
+    width: 100%;
+    background: #000;
+    border-radius: 8px;
+}
+
+.video-info {
+    margin-top: 15px;
+}
+
+.video-info h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.video-info p {
+    color: var(--text-color-light);
+    line-height: 1.6;
+}
+
+.sidebar {
+    flex: 1;
+    max-width: 400px;
+}
+
+.results {
+    display: grid;
+    gap: 15px;
+}
+
+.video-item {
+    display: flex;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.video-item:hover {
+    background: var(--item-hover-bg);
+}
+
+.video-item img {
+    width: 168px;
+    height: 94px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.video-details {
+    flex: 1;
+}
+
+.video-details h3 {
+    font-size: 14px;
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.video-details small {
+    color: var(--text-color-light);
+    font-size: 12px;
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        max-width: 100%;
+    }
+}
