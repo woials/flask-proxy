@@ -1,9 +1,10 @@
-from flask import Flask,render_template
+from flask import Flask,render_template,redirect,url_for
 from blueprint.youtube import youtube
+from blueprint.weather import weather
 
 app = Flask(__name__)
 app.register_blueprint(youtube, url_prefix='/youtube')
-
+app.register_blueprint(weather,url_prefix='/weather')
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -12,6 +13,6 @@ def youtube_page():
     return render_template('youtube.html')
 @app.route('/weather')
 def weather_page():
-    return render_template('weather.html')
+    return redirect('/weather/web/weather')
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

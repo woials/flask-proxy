@@ -1,6 +1,7 @@
 from flask import Blueprint,request,jsonify,Response
 import requests
 import subprocess
+# 動画検索と関連動画取得のサービスをインポート
 from service.light_yt import search_videos,get_related_videos
 
 youtube=Blueprint('youtube',__name__)
