@@ -1,4 +1,4 @@
-from flask import Blueprint,request,jsonify,Response,render_template
+from flask import Blueprint,request,jsonify,Response,url_for,render_template
 import requests
 # 天気情報取得のサービスをインポート
 from service.weather import get_weather,get_weather_summary
@@ -19,31 +19,35 @@ def api_weather():
 def draw_weather():
     weather_data=get_weather()
     weather_summary_data=get_weather_summary()
-    area=weather_data["area"]
-    today=weather_data["today"]
-    tomorrow=weather_data["tomorrow"]
-    summary=weather_summary_data["text"]
-    html=f"""
-    <html>
-        <head>
-            <meta charset="utf-8">
-            <title>天気</title>
-            <link rel="stylesheet" href={{url_for('static',filename='css/weather.css')}}>
-        </head>
-        <body>
-            <h1>{area}</h1>
-            <h2>天気概況</h2>
-            <p>{summary}</p>
-            <section>
-                <pre class="weather {today.get("icon")}">{today.get("ascii")}</pre>
-                <p>今日の天気:{today.get("text")}</p>
-            </section>
-            <section>
-                <pre class="weather {tomorrow.get("icon")}">{tomorrow.get("ascii")}</pre>
-                <p>明日の天気:{tomorrow.get("text")}</p>
-            </section>
-            
-        </body>
-    </html>
-    """
-    return html
+    params={
+    "css_url":url_for('static',filename='css/weather.css'),
+    "area":weather_data["area"],
+    "today":weather_data["today"],
+    "tomorrow":weather_data["tomorrow"],
+    "summary":weather_summary_data["text"],
+    "precip_chances":weather_data["precip_chances"],
+    }
+    return render_template('weather.html',**params)  #**をつけると辞書のキーが変数名として格納される
+
+"""
+〇位置引数とキーワード引数
+
+位置引数：変数の位置で判断する
+Cの例
+void calc(int x,int y){
+    int result=(x+1)-(y+3);
+    return result;
+}
+xとyの位置を間違えると望んだ結果が得られない
+ex)x=2,y=3 → 3-6=-3
+   これを入れ替えると 4-5=-1
+
+キーワード引数:変数の名前で判断する
+swiftの例
+func greet(person:String,from hometown:String){
+    print("Hello\(person)! Glat you could visit from \(hometown).")
+}
+greet(person:"Tanaka",from:"Fukuoka")
+呼び出すときに名前を書かないとエラーになる
+言い換えると、名前を明示的に指定することで、引数の入れ替えミスなどを防ぐことができる
+"""
