@@ -1,0 +1,55 @@
+.weather{
+    margin: 0;
+    line-height: 1.1;
+    font-family: monospace;
+    text-align: center;
+}
+.weather.sunny{
+    color:#e6b800
+}
+.weather.cloudy{
+    color: #888;
+}
+.weather.rainy{
+    color: #3366cc;
+}
+.weather.snowy{
+    color: #66cccc;
+}
+ul{
+    list-style-type: none;
+}
+body{
+    font-family: system-ui,sans-serif;
+    margin: 0;
+    padding: 12px;
+}
+h1{
+    margin: 0 0 8px 0;
+    font-size: 1.6em;
+}
+.summary{
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+}
+.forecast{
+    display: flex;
+    gap: 12px;
+}
+.today, .tomorrow, .amedas{
+    flex: 1;
+    border: 2px solid #000;
+    padding:8px;
+}
+.advice{
+    border-top: 1px dashed #ccc;
+}
+.advice h4{
+    margin: 0;
+    padding: 0;
+    font-size: 1em;
+}
+#advice_text{
+    white-space: pre-wrap;
+}

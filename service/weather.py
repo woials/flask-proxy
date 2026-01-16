@@ -1,14 +1,20 @@
 import requests
 from flask import request,jsonify,Response
-from datetime import datetime
+from datetime import datetime,timedelta
 from time import time
 from enum import Enum
+import math
 weather_cache=None
 weather_summary_cache=None
 weather_cache_time=None
 weather_summary_cache_time=None
+
+amedas_code_cache=None
+amedas_json_cache=None
+
 humidity_cache=None
 humidity_cache_time=None
+
 CACHE_TTL=300  #5分
 HUMIDITY_CACHE_TTL=60*60  #１時間
 
@@ -39,6 +45,20 @@ def get_weather():
             raise  #例外を外に投げる
         
     temps=get_temp(data)
+    amedas_code=get_amedas_code()
+    amedas_json,used_time=get_amedas_json()
+    station=get_station_data(amedas_json,amedas_code)
+    temp=get_current_temp(station)
+    humidity=get_humidity(station)
+    precip10m=get_precipitation_10minutes(station)
+    precip1h=get_precipitation_1h(station)
+    wind=get_wind(station)
+    sun10m=get_sun_10minutes(station)
+    sun1h=get_sun_1h(station)
+    
+    if used_time:
+        fetched_time=used_time.strftime("%H時%M分")
+    
     #天気テキスト取得
     target_area_code="400030"
     weather=None#pythonにおけるNULL　NULLはPythonにはない
@@ -47,6 +67,56 @@ def get_weather():
         if area_data['area']['code']==target_area_code:
             weather=area_data
             break
+    #予報とアメダスとを比較して、予報と違う場合は特殊テキストを表示
+    today_forecast=weather['weathers'][0]
+    advice=""
+    #雨予報なのに降っていない
+    if "雨" in today_forecast or "雪" in today_forecast:
+        if precip10m==0:
+            advice+="今は雨が止んでいます\n"
+            if precip1h==0:
+                advice+="1時間ほど雨は降っていないようです\n"
+        else:
+            advice=f"予報通り雨が降っています(直近10分:{precip10m}mm)\n"
+    elif not any(word in today_forecast for word in["雨","雪"]):
+        if precip10m>0:
+            advice+=f"予報外の雨が降っています！(直近10分:{precip10m}mm)\n"
+        
+    #曇り予報なのに日差しがある
+    if any(word in today_forecast for word in ["曇り","くもり","くもり"]):  #"曇り","くもり","くもり"のいずれかがあればtrue
+        if sun10m>0.8:
+            advice+="日差しが差してきました\n"
+            if sun1h>0.8:
+                advice+="予報より晴れているようです\n"
+        else:
+            advice+="予報通り曇っています\n"
+    #風の強さ
+    if wind >10:
+        advice+="強風に注意！\n"
+    elif wind>5:
+        advice+="風が吹いています\n"
+    else:
+        advice+="風は穏やかです\n"
+    
+    #不快指数と体感温度
+    di=None
+    apparent_temp=None
+    if temp is not None and humidity is not None and wind is not None:
+        #不快指数
+        di=round(0.81 * temp + 0.01 * humidity * (0.99 * temp - 14.3) + 46.3, 1)
+        di_text=""
+        if di<60:
+            di_text="寒い"
+        elif di<75:
+            di_text="快適"
+        elif di<85:
+            di_text="暑い"
+        else:
+            di_text="暑すぎ！"
+        e = (humidity / 100) * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
+        #体感温度
+        apparent_temp = round(temp + 0.33 * e - 0.7 * wind - 4.0, 1)
+    
     #降水確率取得
     pop_series=data[0]['timeSeries'][1]
     time_defines=pop_series['timeDefines']#timeSeriesのtimeDefinesは時間軸のリスト
@@ -112,6 +182,17 @@ def get_weather():
                 "icon":tomorrow_icon,
                 "ascii":tomorrow_ascii_art
                 },
+            "amedas":{
+                "fetched_time":fetched_time,
+                "temp":temp,
+                "humidity":humidity,
+                "precip10m":precip10m,
+                "precip1h":precip1h,
+                "wind":wind,
+                "di":di,
+                "apparent_temp":apparent_temp,
+                "advice":advice
+            }
             
         }
         weather_cache=weather_data
@@ -253,23 +334,95 @@ from array import array
 a=array("i",[1,2,3])  #iは型がsigned intであることを指定する
 """
 
-def get_current_humidity():
-    global humidity_cache,humidity_cache_time
+def get_amedas_code():
+    global amedas_code_cache
+    area="飯塚"
     url="https://www.jma.go.jp/bosai/amedas/const/amedastable.json"
     try:
         resp=requests.get(url,timeout=5)
         resp.raise_for_status()
         data=resp.json()
     except requests.RequestException:
-        if humidity_cache:
-            return humidity_cache
+        if amedas_code_cache is not None:  #0や空文字もはじくようにする
+            return amedas_code_cache
         raise
+    amedas_code=next(
+        (k for k,v in data.items()
+        if v.get("kjName")==area),
+        None)
     
-    station_code="82136"
+    amedas_code_cache=amedas_code
+    return amedas_code
+        
+
+def get_amedas_json():
+    global amedas_json_cache
     
-    if station_code in data:
-        #観測データは[１時間前、５０分前、... 、最新]のように並んでいる
-        humidity_list=data[station_code].get("humidity",[])
-    for h in reversed(humidity_list):
-        if h is not None:
-            return h
+    now=datetime.now()
+    minute=(now.minute//10)*10 #10分単位に切り下げ
+    rounded=now.replace(minute=minute,second=0,microsecond=0)
+    
+    candidates=[
+        rounded,
+        rounded-timedelta(minutes=10)
+    ]
+    
+    for used_time in candidates:
+        ts=used_time.strftime("%Y%m%d%H%M%S")
+        try:
+            url=f"https://www.jma.go.jp/bosai/amedas/data/map/{ts}.json"
+            resp=requests.get(url,timeout=5)
+            resp.raise_for_status()
+            data=resp.json()
+            return data,used_time
+        except requests.RequestException:
+            continue  #今の１０分のデータが取れなかったらcontinueして次のfor文を回す
+    return None,None
+
+def get_station_data(json_data,code):
+    if json_data is None:
+        return None
+    code=str(code)
+    
+    return json_data[code]
+
+def get_humidity(station):
+    if station is None:
+        return None
+    return station.get("humidity",[None])[0]
+"""
+〇json_data[code].get("humidity",[None])[0]
+dict.get(key,default)は
+キーがあればその値を返す、なければdefaultを返すというメソッド
+上のコードだと、humidityがあれば値を返し、なければ[None]を返す
+もし[None]ではなくNoneだと
+None[0]->TypeError
+[None]にすることで
+[None][0]->None  となる。例外は出ず”値が取得できなかった”ことを表現できる
+""" 
+
+def get_current_temp(station):
+    if station is None:
+        return None
+    return station.get("temp",[None])[0]
+def get_precipitation_10minutes(station):
+    if station is None:
+        return None
+    return station.get("precipitation10m",[None])[0]
+def get_precipitation_1h(station):
+    if station is None:
+        return None
+    return station.get("precipitation1h",[None])[0]
+def get_wind(station):
+    if station is None:
+        return None
+    return station.get("wind",[None])[0]
+def get_sun_10minutes(station):
+    if station is None:
+        return None
+    return station.get("sun10m",[None])[0]
+def get_sun_1h(station):
+    if station is None:
+        return None
+    return station.get("sun1h",[None])[0]
+    

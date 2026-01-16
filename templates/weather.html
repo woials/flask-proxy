@@ -1,0 +1,64 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>天気</title>
+    <link rel="stylesheet" href="{{css_url}}">
+</head>
+
+<body>
+    <h1>{{area}}</h1>
+    <section class="summary">
+        <h2>天気概況</h2>
+        <p>{{summary}}</p>
+    </section>
+    <section class="forecast">
+        <section class="amedas">
+            <h4>{{amedas.get("fetched_time")}}の空の様子</h4>
+            <p>温度:{{amedas.get("temp")}}℃</p>
+            <p>湿度:{{amedas.get("humidity")}}%</p>
+            <p>10分間降水量:{{amedas.get("precip10m")}}mm</p>
+            <p>1時間降水量:{{amedas.get("precip1h")}}mm</p>
+            <p>風速:{{amedas.get("wind")}}m/s</p>
+            <p>不快指数:{{amedas.get("di")}}</p>
+            <p>{{amedas.get("di_text")}}</p>
+            <p>体感温度:{{amedas.get("apparent_temp")}}℃</p>
+            <div class="advice">
+                <h4>天気の一言コメント</h4>
+                <p id="advice_text">{{amedas.get("advice")}}</p>
+            </div>
+            
+
+        </section>
+        <section class="today">
+            <pre class="weather {{today.get("icon")}}">{{today.get("ascii")}}</pre>
+            <p>今日の天気:{{today.get("text")}}</p>
+            <h4>今日の気温</h4>
+            <p>最高気温:{{today.get("max")}}℃</p>
+            <h4>今日の降水確率</h4>
+            <ul>
+                {% for p in precip_chances.today %}
+                <li>{{p.time}}:{{p.chance}}%</li>
+                {% endfor %}
+            </ul>
+
+        </section>
+        <section class="tomorrow">
+            <pre class="weather {{tomorrow.get("icon")}}">{{tomorrow.get("ascii")}}</pre>
+            <p>明日の天気:{{tomorrow.get("text")}}</p>
+            <h4>明日の気温</h4>
+            <p>最高気温:{{tomorrow.get("max")}}℃</p>
+            <p>最低気温:{{tomorrow.get("min")}}℃</p>
+            <h4>明日の降水確率</h4>
+            <ul>
+                {% for p in precip_chances.tomorrow %}
+                <li>{{p.time}}:{{p.chance}}%</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </section>
+
+
+</body>
+
+</html>
