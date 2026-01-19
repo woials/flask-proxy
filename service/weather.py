@@ -45,6 +45,7 @@ def get_weather():
             raise  #例外を外に投げる
         
     temps=get_temp(data)
+    weekly_forecast=get_weekly_weather(data)
     amedas_code=get_amedas_code()
     amedas_json,used_time=get_amedas_json()
     station=get_station_data(amedas_json,amedas_code)
@@ -78,18 +79,21 @@ def get_weather():
                 advice+="1時間ほど雨は降っていないようです\n"
         else:
             advice=f"予報通り雨が降っています(直近10分:{precip10m}mm)\n"
-    elif not any(word in today_forecast for word in["雨","雪"]):
+    else: #雨予報でないのに降っている
         if precip10m>0:
             advice+=f"予報外の雨が降っています！(直近10分:{precip10m}mm)\n"
         
     #曇り予報なのに日差しがある
-    if any(word in today_forecast for word in ["曇り","くもり","くもり"]):  #"曇り","くもり","くもり"のいずれかがあればtrue
+    if any(word in today_forecast for word in ["曇り","曇","くもり"]):  #"曇り","曇","くもり"のいずれかがあればtrue
         if sun10m>0.8:
             advice+="日差しが差してきました\n"
             if sun1h>0.8:
                 advice+="予報より晴れているようです\n"
-        else:
-            advice+="予報通り曇っています\n"
+        # else:
+        #     advice+="予報通り曇っています\n"
+    elif any(word in today_forecast for word in ["晴れ","晴"]):
+        if sun10m<0.3:
+            advice+="予報より曇っているようです\n"
     #風の強さ
     if wind >10:
         advice+="強風に注意！\n"
@@ -100,6 +104,7 @@ def get_weather():
     
     #不快指数と体感温度
     di=None
+    di_text=""
     apparent_temp=None
     if temp is not None and humidity is not None and wind is not None:
         #不快指数
@@ -113,9 +118,10 @@ def get_weather():
             di_text="暑い"
         else:
             di_text="暑すぎ！"
-        e = (humidity / 100) * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
-        #体感温度
-        apparent_temp = round(temp + 0.33 * e - 0.7 * wind - 4.0, 1)
+        if all(v is not None for v in [temp,humidity,wind]):  #すべての値がNoneでないことを確認
+            e = (humidity / 100) * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
+            #体感温度
+            apparent_temp = round(temp + 0.33 * e - 0.7 * wind - 4.0, 1)
     
     #降水確率取得
     pop_series=data[0]['timeSeries'][1]
@@ -147,6 +153,8 @@ def get_weather():
         for i,time_str in enumerate(time_defines):
             forecast_time=datetime.fromisoformat(time_str)
             pop_value=area_pop_data['pops'][i]
+            if pop_value=="":
+                pop_value="--"
             display_time=forecast_time.strftime('%H:%M')#06:00のような表示になる
             if forecast_time.date()==current_time.date():
                 today_pop.append({
@@ -190,9 +198,11 @@ def get_weather():
                 "precip1h":precip1h,
                 "wind":wind,
                 "di":di,
+                "di_text":di_text,
                 "apparent_temp":apparent_temp,
                 "advice":advice
-            }
+            },
+            "weekly_forecast":weekly_forecast
             
         }
         weather_cache=weather_data
@@ -334,6 +344,166 @@ from array import array
 a=array("i",[1,2,3])  #iは型がsigned intであることを指定する
 """
 
+def get_weekly_weather(data):
+    WEATHER_CODE = {
+    "100": "晴れ",
+    "101": "晴れ時々曇り",
+    "102": "晴れ一時雨",
+    "103": "晴れ時々雨",
+    "104": "晴れ一時雪",
+    "105": "晴れ時々雪",
+    "106": "晴れ一時雨か雪",
+    "107": "晴れ時々雨か雪",
+    "108": "晴れ一時雨か雷雨",
+    "110": "晴れのち時々曇り",
+    "111": "晴れのち曇り",
+    "112": "晴れのち一時雨",
+    "113": "晴れのち時々雨",
+    "114": "晴れのち雨",
+    "115": "晴れのち一時雪",
+    "116": "晴れのち時々雪",
+    "117": "晴れのち雪",
+    "118": "晴れのち雨か雪",
+    "119": "晴れのち雨か雷雨",
+    "120": "晴れ朝夕一時雨",
+    "121": "晴れ朝の内一時雨",
+    "122": "晴れ夕方一時雨",
+    "123": "晴れ山沿い雷雨",
+    "124": "晴れ山沿い雪",
+    "125": "晴れ午後は雷雨",
+    "126": "晴れ昼頃から雨",
+    "127": "晴れ夕方から雨",
+    "128": "晴れ夜は雨",
+    "130": "朝の内霧後晴れ",
+    "131": "晴れ明け方霧",
+    "132": "晴れ朝夕曇り",
+    "140": "晴れ時々雨で雷を伴う",
+    "160": "晴れ一時雪か雨",
+    "170": "晴れ時々雪か雨",
+    "181": "晴れのち雪か雨",
+    "200": "曇り",
+    "201": "曇り時々晴れ",
+    "202": "曇り一時雨",
+    "203": "曇り時々雨",
+    "204": "曇り一時雪",
+    "205": "曇り時々雪",
+    "206": "曇り一時雨か雪",
+    "207": "曇り時々雨か雪",
+    "208": "曇り一時雨か雷雨",
+    "209": "霧",
+    "210": "曇りのち時々晴れ",
+    "211": "曇りのち晴れ",
+    "212": "曇りのち一時雨",
+    "213": "曇りのち時々雨",
+    "214": "曇りのち雨",
+    "215": "曇りのち一時雪",
+    "216": "曇りのち時々雪",
+    "217": "曇りのち雪",
+    "218": "曇りのち雨か雪",
+    "219": "曇りのち雨か雷雨",
+    "220": "曇り朝夕一時雨",
+    "221": "曇り朝の内一時雨",
+    "222": "曇り夕方一時雨",
+    "223": "曇り日中時々晴れ",
+    "224": "曇り昼頃から雨",
+    "225": "曇り夕方から雨",
+    "226": "曇り夜は雨",
+    "228": "曇り昼頃から雪",
+    "229": "曇り夕方から雪",
+    "230": "曇り夜は雪",
+    "231": "曇り海上海岸は霧か霧雨",
+    "240": "曇り時々雨で雷を伴う",
+    "250": "曇り時々雪で雷を伴う",
+    "260": "曇り一時雪か雨",
+    "270": "曇り時々雪か雨",
+    "281": "曇りのち雪か雨",
+    "300": "雨",
+    "301": "雨時々晴れ",
+    "302": "雨時々止む",
+    "303": "雨時々雪",
+    "304": "雨か雪",
+    "306": "大雨",
+    "308": "雨で暴風を伴う",
+    "309": "雨一時雪",
+    "311": "雨のち晴れ",
+    "313": "雨のち曇り",
+    "314": "雨のち時々雪",
+    "315": "雨のち雪",
+    "316": "雨か雪のち晴れ",
+    "317": "雨か雪のち曇り",
+    "320": "朝の内雨のち晴れ",
+    "321": "朝の内雨のち曇り",
+    "322": "雨朝晩一時雪",
+    "323": "雨昼頃から晴れ",
+    "324": "雨夕方から晴れ",
+    "325": "雨夜は晴",
+    "326": "雨夕方から雪",
+    "327": "雨夜は雪",
+    "328": "雨一時強く降る",
+    "329": "雨一時みぞれ",
+    "340": "雪か雨",
+    "350": "雨で雷を伴う",
+    "361": "雪か雨のち晴れ",
+    "371": "雪か雨のち曇り",
+    "400": "雪",
+    "401": "雪時々晴れ",
+    "402": "雪時々止む",
+    "403": "雪時々雨",
+    "405": "大雪",
+    "406": "風雪強い",
+    "407": "暴風雪",
+    "409": "雪一時雨",
+    "411": "雪のち晴れ",
+    "413": "雪のち曇り",
+    "414": "雪のち雨",
+    "420": "朝の内雪のち晴れ",
+    "421": "朝の内雪のち曇り",
+    "422": "雪昼頃から雨",
+    "423": "雪夕方から雨",
+    "425": "雪一時強く降る",
+    "426": "雪のちみぞれ",
+    "427": "雪一時みぞれ",
+    "450": "雪で雷を伴う",
+}
+    weekly_forecast=[]
+     #週間天気予報は福岡県全体ででる
+    weekly_data = data[1]  # 2つ目のオブジェクトが週間予報
+
+    # 天気・降水確率のデータ
+    weather_series = weekly_data['timeSeries'][0]
+    time_defines = weather_series['timeDefines']
+    area_data = weather_series['areas'][0]  # 福岡県のデータ
+
+    # 今日と明日を除外（3日目以降を取得）
+    forecast_days = time_defines[2:]  # インデックス2以降（3日目から）
+    for i, day in enumerate(forecast_days):
+        idx=2+i
+        dt=datetime.fromisoformat(day)
+        formatted_day=f"{dt.month}月{dt.day}日"
+        # 天気コードと降水確率データ
+        weather_codes = area_data['weatherCodes'][idx] if area_data['weatherCodes'][idx] != "" else "--"
+        weather_text=WEATHER_CODE.get(weather_codes,"不明")
+        pops = area_data['pops'][idx] if area_data['pops'][idx] != "" else "--"
+        reliabilities = area_data['reliabilities'][idx] if area_data['reliabilities'][idx] != "" else "--"
+
+        # 気温データ
+        temp_series = weekly_data['timeSeries'][1]
+        temp_area_data = temp_series['areas'][0]
+
+        temps_min = temp_area_data['tempsMin'][idx] if temp_area_data['tempsMin'][idx] != "" else "--"
+        temps_max = temp_area_data['tempsMax'][idx] if temp_area_data['tempsMax'][idx] != "" else "--"
+
+        weekly_forecast.append({
+            "date": formatted_day,
+            "weather": weather_text,
+            "weekly_pop": pops,
+            "reliability": reliabilities,
+            "temp_min": temps_min,
+            "temp_max": temps_max
+        })
+    return weekly_forecast
+        
+
 def get_amedas_code():
     global amedas_code_cache
     area="飯塚"
@@ -384,7 +554,7 @@ def get_station_data(json_data,code):
         return None
     code=str(code)
     
-    return json_data[code]
+    return json_data.get(code,None)
 
 def get_humidity(station):
     if station is None:

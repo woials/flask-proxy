@@ -53,3 +53,49 @@ h1{
 #advice_text{
     white-space: pre-wrap;
 }
+#暑すぎ！{
+    color: #ff0000;
+}
+#暑い{
+    color: #ff6600;
+}
+#快適{
+    color: #009900;
+}
+#寒い{
+    color: #0000ff;
+}
+.weekly{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+.day-card{
+    flex: 1;                   /* すべてのカードを同じ幅にする */
+    border: 1px solid #000;     /* M5Paperで見やすいように枠線をつける */
+    padding: 10px 5px;
+    text-align: center;        /* 文字を中央揃えに */
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;    /* カード内では縦に情報を並べる */
+    justify-content: space-around; /* カード内での上下間隔を調整 */
+    min-height: 120px;         /* 高さを揃える */
+}
+.day-card .date{
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 1px solid #ccc;
+    margin-bottom: 5px;
+}
+.day-card .temp-box{
+    margin: 5px 0;
+}
+.day-card .max{
+    color: #ff4444;
+}
+.day-card .min{
+    color: #4444ff;
+}

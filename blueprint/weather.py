@@ -26,7 +26,8 @@ def draw_weather():
     "tomorrow":weather_data["tomorrow"],
     "summary":weather_summary_data["text"],
     "precip_chances":weather_data["precip_chances"],
-    "amedas":weather_data["amedas"]
+    "amedas":weather_data["amedas"],
+    "weekly_forecast":weather_data["weekly_forecast"]
     }
     return render_template('weather.html',**params)  #**をつけると辞書のキーが変数名として格納される
 

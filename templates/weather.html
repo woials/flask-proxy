@@ -20,14 +20,13 @@
             <p>10分間降水量:{{amedas.get("precip10m")}}mm</p>
             <p>1時間降水量:{{amedas.get("precip1h")}}mm</p>
             <p>風速:{{amedas.get("wind")}}m/s</p>
-            <p>不快指数:{{amedas.get("di")}}</p>
-            <p>{{amedas.get("di_text")}}</p>
+            <p>不快指数:{{amedas.get("di")}}　　<span id="{{amedas.get("di_text")}}">{{amedas.get("di_text")}}</span></p>
             <p>体感温度:{{amedas.get("apparent_temp")}}℃</p>
             <div class="advice">
                 <h4>天気の一言コメント</h4>
                 <p id="advice_text">{{amedas.get("advice")}}</p>
             </div>
-            
+
 
         </section>
         <section class="today">
@@ -41,8 +40,8 @@
                 <li>{{p.time}}:{{p.chance}}%</li>
                 {% endfor %}
             </ul>
-
         </section>
+
         <section class="tomorrow">
             <pre class="weather {{tomorrow.get("icon")}}">{{tomorrow.get("ascii")}}</pre>
             <p>明日の天気:{{tomorrow.get("text")}}</p>
@@ -56,8 +55,24 @@
                 {% endfor %}
             </ul>
         </section>
-    </section>
 
+    </section>
+    <h4>週間天気予報</h4>
+    <section class="weekly">
+            {% for day in weekly_forecast %}
+            <div class="weekly-container">
+                <div class="day-card">
+                    <div class="date">{{day.date}}</div>
+                    <div class="weather-text">天気:{{day.weather}}</div>
+                    <div class="temp-box">
+                        <span class="max">最高気温:{{day.temp_max}}℃</span>/
+                        <span class="min">最低気温:{{day.temp_min}}℃</span>
+                    </div>
+                    <div class="pop">降水確率:{{day.weekly_pop}}%</div>
+                </div>
+            </div>
+            {% endfor %}
+    </section>
 
 </body>
 
