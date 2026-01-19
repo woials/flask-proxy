@@ -14,5 +14,11 @@ def youtube_page():
 @app.route('/weather')
 def weather_page():
     return redirect('/weather/web/weather')
+@app.route('/radio')
+def radio_page():
+    return render_template('radio.html')
+@app.route('/sw.js')
+def service_worker():
+    return app.send_static_file('sw.js')
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
