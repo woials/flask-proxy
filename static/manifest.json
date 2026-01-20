@@ -1,0 +1,15 @@
+{
+    "name":"筑豊天気予報",
+    "short_name":"筑豊天気",
+    "start_url":"/",
+    "display":"standalone",
+    "background_color":"#ffffff",
+    "theme_color":"#0000ff",
+    "icons":[
+        {
+            "src":"/static/icon-512.png",
+            "sizes":"512x512",
+            "type":"image/png"
+        }
+    ]
+}
