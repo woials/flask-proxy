@@ -6,7 +6,7 @@
     <title>読むラジオ</title>
 </head>
 <body>
-    <audio src="../test.mp3" controls></audio>
+    <audio src="{{url_for('static', filename='test.mp3')}}" controls></audio>
     <p id="output"></p>
 </body>
 <script src="{{url_for('static',filename='js/radio.js')}}"></script>

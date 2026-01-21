@@ -7,8 +7,8 @@ GEMINI_PROMPT=None
 
 def mp3_transcribe():
     buffer = []
-    model = WhisperModel("base", device="cpu", compute_type="int8")
-    segments, info = model.transcribe("test.mp3", beam_size=5)
+    model = WhisperModel("small", device="cpu", compute_type="int8")
+    segments, info = model.transcribe("static/test.mp3", beam_size=5)
 
     for segment in segments:
         text = segment.text.strip()
@@ -68,3 +68,18 @@ def gemini_format(text_block:str):
             "text": result.stderr,
             "status":"error"
         }
+        
+"""
+〇faster-whisperの高速化
+1.AVX2.0命令セット対応のCPUを使用する
+2.oneMKL版のfaster-whisperをインストールする(intel CPU向け)
+pipで普通にインストールする場合、OpenBLAS版がインストールされる
+・oneMKL版のインストール方法
+1.Intel oneAPI BASE Toolkitをインストールする
+2.oneAPIの環境を有効化する
+"C:\Program Files (x86)\Intel\oneAPI\setvars.bat"に入っているはず
+3.その状態でCTranslate2をビルド or oneMKL版wheelを使う
+まずはpython -m pip install -U ctranslate2を試してみる(wheelがあればoneMKL版がインストールされる)
+もしOpenBLAS版がインストールされた場合、pip install --no-binary=ctranslate2 ctranslate2
+でソースコードからビルドする(時間かかる)
+"""

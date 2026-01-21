@@ -13,19 +13,28 @@ def get_radio_transcription():
     }
     return render_template('radio.html',**params)  #**をつけると辞書のキーが変数名として格納される
 @radio.route('/api/stream')#音声文字起こしのストリーミング処理
-def stream():
-    def generate():
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            futures=[]
-            for text_block in mp3_transcribe():
-                futures.append(
-                    executor.submit(gemini_format,text_block)
-                )
+def stream():     
+    def generate():         
+        with ThreadPoolExecutor(max_workers=2) as executor:             
+            futures={}             
+            buffer={}
+            next_index=0
+            
+            for i,text_block in enumerate(mp3_transcribe()):
+                future=executor.submit(gemini_format,text_block)
+                futures[future]=i
+            
             for future in as_completed(futures):
+                i=futures[future]
                 formatted=future.result()
-                if formatted["status"]=="ok":
-                    yield f"data:{formatted['text']}\n\n"
-                else:
-                    yield f"data:Error: {formatted['text']}\n\n"
-        yield "event:end\ndata:end\n\n" 
-    return Response(generate(), mimetype='text/event-stream')
+                buffer[i]=formatted
+            
+                while next_index in buffer:
+                    item=buffer.pop(next_index)
+                    if item["status"]=="ok":
+                        yield f"data:{item['text']}\n\n"
+                    else:
+                        yield f"data:Error: {item['error']}\n\n"
+                    next_index+=1
+        yield "event: end\ndata: end\n\n"
+    return Response(generate(),mimetype='text/event-stream')
