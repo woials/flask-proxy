@@ -5,20 +5,31 @@ import json
 
 #動画を検索する関数
 def search_videos(query,max_result=20):
-    quoted_query=f'"{query}"'
+    quoted_query=query
     #コマンドを組み立て
     cmd=[
         'yt-dlp',
         '-j',
         '--flat-playlist',
+        '--print-json',
+        # ライブ配信を除外するフィルタ
+        '--match-filter',
+        'live_status == "not_live"',
         f'ytsearch{max_result}:{quoted_query}'
     ]
     print(f"DEBUG: Executing yt-dlp command: {' '.join(cmd)}")
     #コマンドを実行
-    result=subprocess.run(cmd,capture_output=True,text=True)
+    result=subprocess.run(cmd,capture_output=True,text=True,encoding='utf-8')
     videos=[]
     #cmdの出力を１行ごとに\nで区切る
     for line in result.stdout.strip().split('\n'):
+        if result.returncode !=0:
+            error=result.stderr
+            if '429' in error:
+               print("429:リクエストが多すぎます")
+            else:
+               print(error)
+            continue
         if line:#もし検索結果があれば
             data=json.loads(line)#jsonに変換
             video_id=data.get('id')
@@ -42,10 +53,10 @@ def get_related_videos(video_id,max_results=10):
     cmd=[
         'yt-dlp',
         '-j',
-        '--flat-playlist',
+        '--skip-download',
         f'https://www.youtube.com/watch?v={video_id}'
     ]
-    result=subprocess.run(cmd,capture_output=True,text=True)
+    result=subprocess.run(cmd,capture_output=True,text=True,encoding='utf-8')
     try:
         data=json.loads(result.stdout)
         title=data.get('title','')

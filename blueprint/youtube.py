@@ -1,10 +1,19 @@
-from flask import Blueprint,request,jsonify,Response
-import requests
-import subprocess
+from flask import Blueprint,request,jsonify,send_from_directory,abort
 # 動画検索と関連動画取得のサービスをインポート
 from service.light_yt import search_videos,get_related_videos
+import os
+import yt_dlp
+import threading
+import time
+import ffmpeg
 
 youtube=Blueprint('youtube',__name__)
+SAVE_DIR="static/videos"
+download_lock=threading.Lock()
+
+# 保存用ディレクトリの作成
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR, exist_ok=True)
 
 @youtube.route('/search')
 def search():
@@ -22,42 +31,60 @@ def related(video_id):
     return jsonify(videos)
 @youtube.route('/stream/<video_id>')
 def stream_video(video_id):
-    url=f"https://www.youtube.com/watch?v={video_id}"
-    """
-    ●urlから--get-url
-    youtubeの動画IDから実際の動画ファイルURLを取得する。
-    Youtubeの動画URLは直接アクセスできないので、yt-dlp経由で取得する
-    """
-    cmd=[
-        'yt-dlp',
-        '-f','best[ext=mp4]',
-        '--get-url',
-        url
-    ]
-    result=subprocess.run(cmd,capture_output=True,text=True)
-    video_url=result.stdout.strip().split('\n')[0]
-    #Rangeヘッダー:動画のシーク機能に必要
-    range_header=request.headers.get('Range')
-    headers={}
-    if range_header:
-        headers['Range']=range_header
-    resp=requests.get(video_url,headers=headers,stream=True)
-
-    def generate():
-        for chunk in resp.iter_content(chunk_size=1024*64):#動画を64KBごとに分割する
-            if chunk:
-                yield chunk#もしchunkがあれば64KBに分割して継続的に出力する
-    """
-    Youtubeからの応答ヘッダーをブラウザに転送する
-    Accept-Ranges:bytesでシーク可能と伝える
-    Content-Type:video/mp4で動画ファイルと伝える
-    """
-    response=Response(generate(),status=resp.status_code)
-    response.headers['Content-Type']=resp.headers.get('Content-Type','video/mp4')
-    response.headers['Accept-Ranges']='bytes'
-    # 必要なヘッダーを転送
-    for key in ['Content-Range', 'Content-Length']:
-        if key in resp.headers:
-            response.headers[key] = resp.headers[key]
+    # クエリパラメータから画質を取得(デフォルトは360p)
+    quality=request.args.get('quality','360')
+    if not all(c.isalnum() or c in "-_" for c in video_id):
+        abort(400, description="Invalid video ID")
     
-    return response
+    url=f"https://www.youtube.com/watch?v={video_id}"
+    format_selector = f'bestvideo[height<={quality}][vcodec^=avc1]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best[height<={quality}]'
+
+    # ダウンロードできる最高画質を調べる
+    with yt_dlp.YoutubeDL({
+        'quiet':True,
+        'format':format_selector,
+    }) as ydl:
+        try:
+            info=ydl.extract_info(url,download=False)
+            # 選択されたフォーマットの実際の高さを取得
+            if 'requested_formats' in info:
+                # 映像と音声が分離している場合
+                actual_height = info['requested_formats'][0].get('height', quality)
+            else:
+                # 単一フォーマットの場合
+                actual_height = info.get('height', quality)
+        except Exception as e:
+            return jsonify({"error": f"情報取得失敗: {str(e)}"}), 500
+    # 画質ごとにファイル名を分ける
+    file_name=f"{video_id}_{actual_height}p.mp4"
+    file_path=os.path.join(SAVE_DIR,file_name)
+    
+    with download_lock:
+        if not os.path.exists(file_path):
+            ydl_options={
+            'format':format_selector,
+            # ネットワークエラー時に少し粘る設定を追加
+            'retries': 10,
+            'fragment_retries': 10,
+            'outtmpl':file_path,
+            'merge_output_format':'mp4',
+            'ffmpeg_location':'./ffmpeg.exe',
+            'quiet':True,
+            'no_warnings':True,
+            'nocheckcertificate': True,
+            'geo_bypass': True,
+            'headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                }
+            }
+            try:
+                with yt_dlp.YoutubeDL(ydl_options) as ydl:
+                    ydl.download([url])
+            except Exception as e:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    return jsonify({"error":str(e)}),500
+                    
+    return send_from_directory(SAVE_DIR,file_name)
+    
+

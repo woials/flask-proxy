@@ -9,29 +9,39 @@
 </head>
 
 <body>
-<section class="container">
-    <div class="search-bar">
-        <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
-        <button onclick="search()">検索</button>
-    </div>
+    <section class="container">
+        <div class="search-bar">
+            <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
+            <button onclick="search()">検索</button>
+        </div>
+        <h3>画質設定</h3>
+        <select id="qualitySelect">
+            <option value="144">144p</option>
+            <option value="240">240p</option>
+            <option value="360">360p</option>
+            <option value="480">480p</option>
+            <option value="720">720p</option>
+            <option value="1080">1080p</option>
+        </select>
+        <div class="main-content">
 
-    <div class="main-content">
-        <div class="video-player hidden" id="playerSection">
-            <video id="videoPlayer" controls></video>
-            <div class="video-info">
-                <h2 id="videoTitle"></h2>
-                <small id="videoUploader"></small>
-                <p id="videoDescription"></p>
+            <div class="video-player hidden" id="playerSection">
+                <video id="videoPlayer" controls></video>
+                <div class="video-info">
+                    <h2 id="videoTitle"></h2>
+                    <small id="videoUploader"></small>
+                    <p id="videoDescription"></p>
+
+                </div>
+            </div>
+            <div class="sidebar">
+                <h3 id="slidebarTitle">検索結果</h3>
+                <div class="results" id="results"></div>
             </div>
         </div>
-        <div class="sidebar">
-            <h3 id="slidebarTitle">検索結果</h3>
-            <div class="results" id="results"></div>
-        </div>
-    </div>
-</section>
+    </section>
 
-<script src="{{url_for('static',filename='js/script.js')}}"></script>
+    <script src="{{url_for('static',filename='js/script.js')}}"></script>
 </body>
 
 </html>

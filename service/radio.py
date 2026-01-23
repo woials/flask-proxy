@@ -3,6 +3,7 @@ import requests
 import os
 import hashlib
 import json
+from email.utils import parsedate_to_datetime
 RSS_URL = "https://www.nhk.or.jp/s-media/news/podcast/list/v1/all.xml"
 SAVE_DIR = os.path.join(".","static","radio_news")
 
@@ -13,7 +14,7 @@ if not os.path.exists(SAVE_DIR):
 def download_radio():
     feed = feedparser.parse(RSS_URL)
     
-    for entry in feed.entries:
+    for entry in feed.entries[:3]:
         # enclosureタグがあるか確認
         # hasattrは属性が存在するか確認する関数(boolを返す)
         if hasattr(entry, 'enclosures') and len(entry.enclosures) > 0:
@@ -25,10 +26,17 @@ def download_radio():
                     break
             if not audio_url:
                 continue
+            #pubDateを使って日付ごとにディレクトリを作成
+            published=entry.get("published", None)
+            dt=parsedate_to_datetime(published) if published else None
+            date_str=dt.strftime("%Y-%m-%d")
+            date_dir=os.path.join(SAVE_DIR,date_str)
+            os.makedirs(date_dir, exist_ok=True)
+            
             # 一意のIDを使って保存先ディレクトリを決定
             raw_id = entry.get("guid") or entry.get("id") or entry.link
             id=hashlib.sha256(raw_id.encode()).hexdigest()
-            radio_path = os.path.join(SAVE_DIR, id)
+            radio_path = os.path.join(date_dir, id)
             os.makedirs(radio_path, exist_ok=True)
                 
             title=entry.title
@@ -70,7 +78,7 @@ def download_radio():
             # ラジオの情報をmetadata.jsonとして保存
             metadata={
                     "title":title,
-                    "published":entry.get("pubDate", None),
+                    "date":date_str,
                     "link":audio_url,
                     "guid":raw_id
             }

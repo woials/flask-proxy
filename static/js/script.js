@@ -35,7 +35,7 @@ async function search() {
     主にクエリパラメータ(URLの?以降の部分)の値をエンコードするときに使う*/
 
     // "/search+クエリ"の結果を取得する➡pythonのsearch()を実行し、yt-dlpの結果を取得する
-    const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+    const response = await fetch(`youtube/search?q=${encodeURIComponent(query)}`);
     const videos = await response.json();
     document.getElementById('slidebarTitle').textContent = "検索結果";
     displayVideos(videos);
@@ -62,9 +62,22 @@ function displayVideos(videos) {
     `).join('');
 }
 
+
+
 async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
     currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
-
+    const url = `/youtube/stream/${VideoId}`;
+    const cache=await caches.open('video-storage');
+    const cachedResponse=await cache.match(url);
+    const quality=document.getElementById('qualitySelect').value;
+    
+    //キャッシュの確認
+    if(!cachedResponse){
+        console.log("未キャッシュのため、バックグランドで保存を開始します...")
+        fetch(url).then(response => { //awaitせずfetchだけ投げることで非同期処理
+            if(response.ok) cache.put(url,response);
+        });
+    }
     //プレイヤーを表示
     const playersection = document.getElementById('playerSection');
     playersection.classList.remove('hidden');
@@ -76,14 +89,12 @@ async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
 
     //動画読み込み
     const videoPlayer = document.getElementById('videoPlayer');
-    videoPlayer.src = `/stream/${VideoId}`;
-    try {
+    videoPlayer.src=`youtube/stream/${VideoId}?quality=${quality}`;
+    try{
         await videoPlayer.play();
-        //動画開始したらMedia Session APIを更新
         updateMediaSession(title, uploader, thumbnailURL);
-    } catch (error) {
-        console.log("動画の自動再生に失敗 ", error);
-        alert("動画の再生を開始できませんでした。画面をタップして再生してください。");
+    }catch(error){
+        console.error("動画の再生に失敗しました:",error);
     }
     loadRelatedVideos(VideoId);
 }
@@ -92,7 +103,7 @@ async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
 async function loadRelatedVideos(videoId) {
     document.getElementById('slidebarTitle').textContent = '関連動画';
 
-    const response = await fetch(`/related/${videoId}`);
+    const response = await fetch(`youtube/related/${videoId}`);
     const videos = await response.json();
 
     // 現在の動画を除外
@@ -102,10 +113,15 @@ async function loadRelatedVideos(videoId) {
 
 function displayVideos(videos) {
     const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = videos.map(v => `
+    resultsDiv.innerHTML = videos.map(v => {
+        //シングルクォートをエスケープ
+        // /'/gはすべてのシングルクオートを対象にするという意味
+        // gはグローバルフラグ、すべての一致を対象にする
+        const safeTitle=v.title.replace(/'/g,'\\'); 
+        return ` 
         <div class="video-item" onclick='playVideo(
         "${v.id}",
-         ${JSON.stringify(v.title)},
+         ${JSON.stringify(safeTitle)},
           ${JSON.stringify(v.description || '')},
            ${JSON.stringify(v.uploader || '')},
            "${v.thumbnail}"
@@ -117,7 +133,8 @@ function displayVideos(videos) {
                 <small>${formatViews(v.view_count)}回視聴</small>
             </div>
         </div>
-    `).join('');
+    `;
+}).join('');
 }
 
 function formatViews(count) {
