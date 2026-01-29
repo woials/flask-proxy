@@ -66,18 +66,28 @@ function displayVideos(videos) {
 
 async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
     currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
+    if(currentVideo===null){
+        currentVideo=VideoId;
+    }
+
     const url = `/youtube/stream/${VideoId}`;
     const cache=await caches.open('video-storage');
     const cachedResponse=await cache.match(url);
     const quality=document.getElementById('qualitySelect').value;
-    
-    //キャッシュの確認
-    if(!cachedResponse){
-        console.log("未キャッシュのため、バックグランドで保存を開始します...")
-        fetch(url).then(response => { //awaitせずfetchだけ投げることで非同期処理
-            if(response.ok) cache.put(url,response);
-        });
+    const CacheOption=document.getElementById('CacheOption');
+    //キャッシュする設定がONであれば実行する
+    if(CacheOption.checked){
+        //キャッシュの確認
+        if(!cachedResponse){
+            console.log("未キャッシュのため、バックグランドで保存を開始します...")
+            fetch(url).then(response => { //awaitせずfetchだけ投げることで非同期処理
+                //responseをそのままputするとresponseが消費されて後で使えないときがある
+                //clone()することでresponseを複製して保存する
+                if(response.ok) cache.put(url,response.clone()); 
+            });
+        }
     }
+    
     //プレイヤーを表示
     const playersection = document.getElementById('playerSection');
     playersection.classList.remove('hidden');

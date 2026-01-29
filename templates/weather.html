@@ -10,73 +10,85 @@
 </head>
 
 <body>
+    <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
     <h1>{{area}}</h1>
     <section class="summary">
         <h2>天気概況</h2>
-        <p>{{summary}}</p>
+        <p><span id="summary">{{summary}}</span></p>
     </section>
     <section class="forecast">
         <section class="amedas">
-            <h4>{{amedas.get("fetched_time")}}の空の様子</h4>
-            <p>温度:{{amedas.get("temp")}}℃</p>
-            <p>湿度:{{amedas.get("humidity")}}%</p>
-            <p>10分間降水量:{{amedas.get("precip10m")}}mm</p>
-            <p>1時間降水量:{{amedas.get("precip1h")}}mm</p>
-            <p>風速:{{amedas.get("wind")}}m/s</p>
-            <p>不快指数:{{amedas.get("di")}}　　<span id="{{amedas.get("di_text")}}">{{amedas.get("di_text")}}</span></p>
-            <p>体感温度:{{amedas.get("apparent_temp")}}℃</p>
+            <h4><span id="fetched_time">{{amedas.get("fetched_time")}}</span>の空の様子</h4>
+            <p>温度:<span id="temp">{{amedas.get("temp")}}</span></p>
+            <p>湿度:<span id="humidity">{{amedas.get("humidity")}}</span></p>
+            <p>10分間降水量:<span id="precip10m">{{amedas.get("precip10m")}}</span></p>
+            <p>1時間降水量:<span id="precip1h">{{amedas.get("precip1h")}}</span></p>
+            <p>風速:<span id="wind">{{amedas.get("wind")}}</span></p>
+            <p>不快指数:<span id="di_Element">{{amedas.get("di")}}　　</span>
+                <span id="di_text" class="di">{{amedas.get("di_text")}}</span>
+            </p>
+            <p>体感温度:<span id="apparent_temp">{{amedas.get("apparent_temp")}}</span></p>
             <div class="advice">
                 <h4>天気の一言コメント</h4>
-                <p id="advice_text">{{amedas.get("advice")}}</p>
+                <p id="advice_text"><span id="advice">{{amedas.get("advice")}}</span></p>
             </div>
 
 
         </section>
         <section class="today">
-            <pre class="weather {{today.get("icon")}}">{{today.get("ascii")}}</pre>
-            <p>今日の天気:{{today.get("text")}}</p>
+            <pre id="weather_today"><span id="today_ascii">{{today.get("ascii")}}</span></pre>
+            <p>今日の天気:<span id="today">{{today.get("text")}}</span></p>
             <h4>今日の気温</h4>
-            <p>最高気温:{{today.get("max")}}℃</p>
+            <p>最高気温:<span id="today_max">{{today.get("max")}}</span></p>
             <h4>今日の降水確率</h4>
-            <ul>
-                {% for p in precip_chances.today %}
-                <li>{{p.time}}:{{p.chance}}%</li>
-                {% endfor %}
-            </ul>
+            <section id="today_precip">
+                <ul>
+                    {% for p in precip_chances.today %}
+                    <li>{{p.time}}:{{p.chance}}%</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
         </section>
 
         <section class="tomorrow">
-            <pre class="weather {{tomorrow.get("icon")}}">{{tomorrow.get("ascii")}}</pre>
-            <p>明日の天気:{{tomorrow.get("text")}}</p>
+            <pre id="weather_tomorrow"><span id="tomorrow_ascii">{{tomorrow.get("ascii")}}</span></pre>
+            <p>明日の天気:<span id="tomorrow">{{tomorrow.get("text")}}</span></p>
             <h4>明日の気温</h4>
-            <p>最高気温:{{tomorrow.get("max")}}℃</p>
-            <p>最低気温:{{tomorrow.get("min")}}℃</p>
+            <p>最高気温:<span id="tomorrow_max">{{tomorrow.get("max")}}</span></p>
+            <p>最低気温:<span id="tomorrow_min">{{tomorrow.get("min")}}</span></p>
             <h4>明日の降水確率</h4>
-            <ul>
+            <section id="tomorrow_precip">
+                <ul>
                 {% for p in precip_chances.tomorrow %}
                 <li>{{p.time}}:{{p.chance}}%</li>
                 {% endfor %}
             </ul>
+            </section>
+            
         </section>
 
     </section>
     <h4>週間天気予報</h4>
     <section class="weekly">
-            {% for day in weekly_forecast %}
-            <div class="weekly-container">
-                <div class="day-card">
-                    <div class="date">{{day.date}}</div>
-                    <div class="weather-text">天気:{{day.weather}}</div>
-                    <div class="temp-box">
-                        <span class="max">最高気温:{{day.temp_max}}℃</span>/
-                        <span class="min">最低気温:{{day.temp_min}}℃</span>
-                    </div>
-                    <div class="pop">降水確率:{{day.weekly_pop}}%</div>
+        {% for day in weekly_forecast %}
+        <div class="weekly-container">
+            <div class="day-card">
+                <div class="date">{{day.date}}</div>
+                <div class="weather-text">天気:{{day.weather}}</div>
+                <div class="reliability">信頼度:{{day.reliability}}</div>
+                <div class="temp-box">
+                    <span class="max">最高気温:{{day.temp_max}}℃</span>/
+                    <span class="min">最低気温:{{day.temp_min}}℃</span>
                 </div>
+                <div class="pop">降水確率:{{day.weekly_pop}}%</div>
             </div>
-            {% endfor %}
+        </div>
+        {% endfor %}
     </section>
 
 </body>
+
+<script type="module" src="{{url_for('static',filename='js/weather.js')}}"></script>
 
 </html>

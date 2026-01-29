@@ -166,12 +166,13 @@ def get_weather():
                     "time":display_time,
                     "chance":pop_value
                 })
-
+    weather_summary_data=get_weather_summary()
     if weather:
         today_icon,today_ascii_art=weather_to_icon(weather['weathers'][0])
         tomorrow_icon,tomorrow_ascii_art=weather_to_icon(weather['weathers'][1])
         weather_data={
             "area":"筑豊地方",
+            "summary":weather_summary_data,
             "precip_chances":{
                 "today":today_pop,
                 "tomorrow":tomorrow_pop

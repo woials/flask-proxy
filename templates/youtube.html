@@ -10,19 +10,35 @@
 
 <body>
     <section class="container">
+        <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
         <div class="search-bar">
             <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
-            <button onclick="search()">検索</button>
+
+            <button id="search" onclick="search()">検索</button>
         </div>
-        <h3>画質設定</h3>
-        <select id="qualitySelect">
-            <option value="144">144p</option>
-            <option value="240">240p</option>
-            <option value="360">360p</option>
-            <option value="480">480p</option>
-            <option value="720">720p</option>
-            <option value="1080">1080p</option>
-        </select>
+        <section class="options">
+            <div class="quality">
+                <h3>画質設定</h3>
+                <select id="qualitySelect">
+                    <option value="144">144p</option>
+                    <option value="240">240p</option>
+                    <option value="360">360p</option>
+                    <option value="480">480p</option>
+                    <option value="720">720p</option>
+                    <option value="1080">1080p</option>
+                </select>
+            </div>
+
+            <div>
+                <h3>キャッシュ設定</h3>
+                <label class="slide-switch">
+                    <input type="checkbox" id="CacheOption"/>
+                    <span></span>
+                </label>
+            </div>
+        </section>
+
+
         <div class="main-content">
 
             <div class="video-player hidden" id="playerSection">
@@ -34,7 +50,7 @@
 
                 </div>
             </div>
-            <div class="sidebar">
+            <div class="sidebar scroll-hidden">
                 <h3 id="slidebarTitle">検索結果</h3>
                 <div class="results" id="results"></div>
             </div>

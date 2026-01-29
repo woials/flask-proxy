@@ -10,6 +10,7 @@ import ffmpeg
 youtube=Blueprint('youtube',__name__)
 SAVE_DIR="static/videos"
 download_lock=threading.Lock()
+prevVideo=None
 
 # 保存用ディレクトリの作成
 if not os.path.exists(SAVE_DIR):
@@ -32,7 +33,7 @@ def related(video_id):
 @youtube.route('/stream/<video_id>')
 def stream_video(video_id):
     # クエリパラメータから画質を取得(デフォルトは360p)
-    quality=request.args.get('quality','360')
+    quality=request.args.get('quality')
     if not all(c.isalnum() or c in "-_" for c in video_id):
         abort(400, description="Invalid video ID")
     
@@ -59,6 +60,18 @@ def stream_video(video_id):
     file_name=f"{video_id}_{actual_height}p.mp4"
     file_path=os.path.join(SAVE_DIR,file_name)
     
+    # 次の動画を再生した後、前の動画のキャッシュを削除する
+    global prevVideo
+    current=file_name
+    
+    if prevVideo is not None and prevVideo !=current:
+        delete_path=os.path.join(SAVE_DIR,prevVideo)
+        if os.path.exists(delete_path):
+            os.remove(delete_path)
+        else:
+            print(f"{delete_path}が存在しません")
+    prevVideo=current
+    
     with download_lock:
         if not os.path.exists(file_path):
             ydl_options={
@@ -80,6 +93,7 @@ def stream_video(video_id):
             try:
                 with yt_dlp.YoutubeDL(ydl_options) as ydl:
                     ydl.download([url])
+                    isCached=True
             except Exception as e:
                 if os.path.exists(file_path):
                     os.remove(file_path)

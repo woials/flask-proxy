@@ -6,6 +6,7 @@
     <title>読むラジオ</title>
 </head>
 <body>
+    <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
     <button id="updateButton">更新</button>
     <audio src="{{url_for('static', filename='radio_news/audio.mp3')}}" controls></audio>
     <p id="output"></p>

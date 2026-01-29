@@ -53,16 +53,16 @@ h1{
 #advice_text{
     white-space: pre-wrap;
 }
-#暑すぎ！{
+.di.hottest{
     color: #ff0000;
 }
-#暑い{
+.di.hot{
     color: #ff6600;
 }
-#快適{
+.di.comfortable{
     color: #009900;
 }
-#寒い{
+.di.cold{
     color: #0000ff;
 }
 .weekly{

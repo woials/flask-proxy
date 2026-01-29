@@ -1,4 +1,4 @@
-from flask import Blueprint,request,jsonify,Response,url_for,render_template
+from flask import Blueprint,request,jsonify,Response,url_for,render_template,redirect
 import requests
 # 天気情報取得のサービスをインポート
 from service.weather import get_weather,get_weather_summary
@@ -15,10 +15,13 @@ def api_weather():
     return jsonify(data)
 #@weather.route('/m5/weather')#M5Stack用の天気情報取得処理
 
+
+
 @weather.route('/web/weather')#ブラウザ用の天気情報取得処理
 def draw_weather():
-    weather_data=get_weather()
     weather_summary_data=get_weather_summary()
+    weather_data=get_weather()
+    
     params={
     "css_url":url_for('static',filename='css/weather.css'),
     "area":weather_data["area"],

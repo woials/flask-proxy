@@ -33,11 +33,21 @@ body {
 }
 
 .container {
-    max-width: 1400px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    max-width: 100%;
     margin: 0 auto;
     padding: 20px;
 }
-
+.home{
+    display: inline-block;
+    width: fit-content;
+}
+.home img{
+    display: inline-block;
+}
 .search-bar {
     display: flex;
     gap: 10px;
@@ -70,13 +80,19 @@ button:hover {
 
 .main-content {
     display: flex;
+    flex-direction: row;
     gap: 20px;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .video-player {
-    flex: 2;
+    flex: 0 0 auto;
 }
-
+#videoPlayer, video{
+    width: 100%;
+    height: auto;
+}
 video {
     width: 100%;
     background: #000;
@@ -98,8 +114,14 @@ video {
 }
 
 .sidebar {
-    flex: 1;
-    max-width: 400px;
+    flex: 1 1 auto;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -ms-overflow-style: none;  /* IE, Edge */
+    scrollbar-width: none;     /* Firefox */
+}
+.scroll-hidden::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari */
 }
 
 .results {
@@ -146,12 +168,81 @@ video {
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
     .main-content {
         flex-direction: column;
     }
     
     .sidebar {
         max-width: 100%;
+    }
+}
+
+.slide-switch {
+  display: inline-block;
+  position: relative;
+  width: 3em;
+  height: 1.5em;
+  border-radius: 1.5em;
+  overflow: hidden;
+}
+
+.slide-switch input {
+  display: none;
+}
+
+.slide-switch span {
+  position: absolute;
+  display: block;
+  width: 4.5em;
+  height: 100%;
+  left: 0;
+  background-color: #E3E3E3;
+  transition: all 300ms linear;
+}
+.slide-switch span::before {
+  content: 'ON';
+  position: absolute;
+  display: inline-block;
+  right: .3em;
+  color: white;
+  font-size: 0.8em;
+  line-height: 2em;
+}
+.slide-switch span::after {
+  content: '';
+  position: absolute;
+  display: block;
+  width: 1.3em;
+  height: 1.3em;
+  border-radius: 1.3em;
+  left: 1.6em;
+  top: 0.1em;
+  background-color: white;
+}
+
+.slide-switch input:checked ~ span {
+  left: -1.5em;
+  background-color: limegreen;
+}
+
+.options{
+    display: flex;
+
+}
+.quality{
+    display: block;
+    margin-right: 10%;
+}
+@media(min-width:800px){
+    .video-player{
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+@media(min-width:1200px){
+    .video-player{
+        flex: 0 0 60%;
+        max-width: 60%;
     }
 }
