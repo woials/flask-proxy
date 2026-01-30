@@ -1,4 +1,6 @@
 import {openDB} from 'https://unpkg.com/idb?module';
+
+
 async function store_db(){
     
     let data=null;
@@ -144,4 +146,5 @@ function eval_reliability(reliability,text){
     }
     return text;
 }
+
 store_db();
