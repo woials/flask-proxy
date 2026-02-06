@@ -1,4 +1,4 @@
-from flask import Blueprint,request,jsonify,send_from_directory,abort
+from flask import Blueprint,request,jsonify,send_from_directory,abort,json,Response
 # 動画検索と関連動画取得のサービスをインポート
 from service.light_yt import search_videos,get_related_videos
 import os
@@ -10,8 +10,8 @@ import ffmpeg
 youtube=Blueprint('youtube',__name__)
 SAVE_DIR="static/videos"
 download_lock=threading.Lock()
-prevVideo=None
-
+prevVideo={}
+video_states={}
 # 保存用ディレクトリの作成
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -30,10 +30,17 @@ def search():
 def related(video_id):
     videos=get_related_videos(video_id)
     return jsonify(videos)
-@youtube.route('/stream/<video_id>')
+@youtube.route('/stream/<video_id>',methods=['POST'])
 def stream_video(video_id):
+    video_states[video_id]={
+        "status":"downloading",
+        "height":None
+    }
+    
     # クエリパラメータから画質を取得(デフォルトは360p)
-    quality=request.args.get('quality')
+    data=request.get_json() #POSTのデータを取得
+    quality=data.get("quality") #その中にあるqualityを取得
+    
     if not all(c.isalnum() or c in "-_" for c in video_id):
         abort(400, description="Invalid video ID")
     
@@ -60,18 +67,6 @@ def stream_video(video_id):
     file_name=f"{video_id}_{actual_height}p.mp4"
     file_path=os.path.join(SAVE_DIR,file_name)
     
-    # 次の動画を再生した後、前の動画のキャッシュを削除する
-    global prevVideo
-    current=file_name
-    
-    if prevVideo is not None and prevVideo !=current:
-        delete_path=os.path.join(SAVE_DIR,prevVideo)
-        if os.path.exists(delete_path):
-            os.remove(delete_path)
-        else:
-            print(f"{delete_path}が存在しません")
-    prevVideo=current
-    
     with download_lock:
         if not os.path.exists(file_path):
             ydl_options={
@@ -94,11 +89,46 @@ def stream_video(video_id):
                 with yt_dlp.YoutubeDL(ydl_options) as ydl:
                     ydl.download([url])
                     isCached=True
+                    video_states[video_id]["status"]="ready"
+                    video_states[video_id]["height"]=actual_height
             except Exception as e:
+                video_states[video_id]["status"]="error"
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     return jsonify({"error":str(e)}),500
-                    
-    return send_from_directory(SAVE_DIR,file_name)
     
+    # 次の動画を再生した後、前の動画のキャッシュを削除する
+    current_filename=os.path.basename(file_path)
+    for target_file in os.listdir(SAVE_DIR):
+        if target_file!=current_filename:
+            target_fullpath=os.path.join(SAVE_DIR,target_file)
+            try:
+                if os.path.isfile(target_fullpath):
+                    os.remove(target_fullpath)
+                    print(f"削除成功:{target_file}")
+            except Exception as e:
+                print(f"削除スキップ:{target_file}-{e}")
+    
+                           
+    return jsonify({"started":True})
 
+#動画が取得できたらストリーミング
+@youtube.route('/video/<video_id>')
+def serve_video(video_id):
+    state=video_states.get(video_id)
+    if not state or state["status"]!="ready":
+        abort(404)
+    
+    actual_height=state["height"]
+    file_name=f"{video_id}_{actual_height}p.mp4"
+    return send_from_directory(SAVE_DIR,file_name)
+
+#動画が取得できたかのフラグを送信
+@youtube.route('/status/<video_id>')
+def video_status(video_id):
+    state=video_states.get(video_id)
+    if not state:
+        return jsonify({"ready":False})
+    return jsonify({
+        "ready":state["status"]=="ready"
+    })

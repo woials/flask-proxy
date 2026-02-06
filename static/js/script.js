@@ -45,7 +45,7 @@ async function search() {
 function displayVideos(videos) {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = videos.map(v => `
-        <div class="video-item" onclick='playVideo(
+        <div class="video-item" onclick='fetchVideo(
         "${v.id}", 
         ${JSON.stringify(v.title)}, 
         ${JSON.stringify(v.description || '')}, 
@@ -64,30 +64,40 @@ function displayVideos(videos) {
 
 
 
-async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
+async function fetchVideo(VideoId, title, description, uploader, thumbnailURL) {
     currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
-    if(currentVideo===null){
-        currentVideo=VideoId;
+    const quality = document.getElementById('qualitySelect').value;
+    const url = `/youtube/stream/${VideoId}`;
+    const start = Date.now();
+    const TIMEOUT = 60_000; //60s ＿をつけると桁を区切れる
+    const startRes = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            "quality": quality
+        })
+    })
+    if (!startRes.ok) return;
+
+    while (true) {
+        if (Date.now() - start > TIMEOUT) return;
+        try {
+            const res = await fetch(`/youtube/status/${VideoId}`);
+            const json = await res.json();
+            if (json.ready) {
+                play(VideoId, quality, title, uploader, thumbnailURL, description);
+                return;
+            }
+        } catch { }
+
+        await new Promise(r => setTimeout(r, 1000));
     }
 
-    const url = `/youtube/stream/${VideoId}`;
-    const cache=await caches.open('video-storage');
-    const cachedResponse=await cache.match(url);
-    const quality=document.getElementById('qualitySelect').value;
-    const CacheOption=document.getElementById('CacheOption');
-    //キャッシュする設定がONであれば実行する
-    if(CacheOption.checked){
-        //キャッシュの確認
-        if(!cachedResponse){
-            console.log("未キャッシュのため、バックグランドで保存を開始します...")
-            fetch(url).then(response => { //awaitせずfetchだけ投げることで非同期処理
-                //responseをそのままputするとresponseが消費されて後で使えないときがある
-                //clone()することでresponseを複製して保存する
-                if(response.ok) cache.put(url,response.clone()); 
-            });
-        }
-    }
-    
+}
+async function play(VideoId, quality, title, uploader, thumbnailURL, description) {
+    isCache=document.getElementById('CacheOption');
     //プレイヤーを表示
     const playersection = document.getElementById('playerSection');
     playersection.classList.remove('hidden');
@@ -99,16 +109,18 @@ async function playVideo(VideoId, title, description, uploader, thumbnailURL) {
 
     //動画読み込み
     const videoPlayer = document.getElementById('videoPlayer');
-    videoPlayer.src=`youtube/stream/${VideoId}?quality=${quality}`;
-    try{
+    videoPlayer.src = `youtube/video/${VideoId}`;
+    if(isCache.checked){
+        videoPlayer.src+='?cache=1'
+    }
+    try {
         await videoPlayer.play();
         updateMediaSession(title, uploader, thumbnailURL);
-    }catch(error){
-        console.error("動画の再生に失敗しました:",error);
+    } catch (error) {
+        console.error("動画の再生に失敗しました:", error);
     }
     loadRelatedVideos(VideoId);
 }
-
 
 async function loadRelatedVideos(videoId) {
     document.getElementById('slidebarTitle').textContent = '関連動画';
@@ -127,9 +139,9 @@ function displayVideos(videos) {
         //シングルクォートをエスケープ
         // /'/gはすべてのシングルクオートを対象にするという意味
         // gはグローバルフラグ、すべての一致を対象にする
-        const safeTitle=v.title.replace(/'/g,'\\'); 
+        const safeTitle = v.title.replace(/'/g, '\\');
         return ` 
-        <div class="video-item" onclick='playVideo(
+        <div class="video-item" onclick='fetchVideo(
         "${v.id}",
          ${JSON.stringify(safeTitle)},
           ${JSON.stringify(v.description || '')},
@@ -144,7 +156,7 @@ function displayVideos(videos) {
             </div>
         </div>
     `;
-}).join('');
+    }).join('');
 }
 
 function formatViews(count) {
