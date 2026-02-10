@@ -246,3 +246,9 @@ video {
         max-width: 60%;
     }
 }
+.duration{
+    border: 1px solid black;
+    width: fit-content;
+    margin: 3px;
+    padding: 3px;
+}

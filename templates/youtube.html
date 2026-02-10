@@ -12,9 +12,9 @@
     <section class="container">
         <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
         <div class="search-bar">
-            <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') search()">
+            <input id="searchBox" type="text" placeholder="検索" onkeypress="if(event.key==='Enter') app.search()">
 
-            <button id="search" onclick="search()">検索</button>
+            <button id="search" onclick="app.search()">検索</button>
         </div>
         <section class="options">
             <div class="quality">
@@ -57,7 +57,6 @@
         </div>
     </section>
 
-    <script src="{{url_for('static',filename='js/script.js')}}"></script>
-</body>
+<script type="module" src="{{url_for('static',filename='js/script.js')}}"></script></body>
 
 </html>

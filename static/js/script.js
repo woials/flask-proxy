@@ -1,6 +1,25 @@
+import {openDB} from 'https://unpkg.com/idb?module';
 let currentVideo = null;
+const videoMetadata=new Map();
+export async function open_db() {
+    let db; 
+    db=await openDB("youtube-DB",2,{
+        upgrade(db){
+            if(!db.objectStoreNames.contains("youtube")){
+                const ytStore=db.createObjectStore("youtube",{keyPath:'videoId',}); 
+                ytStore.createIndex("title","title",{unique:false});
+                ytStore.createIndex("duration","duration",{unique:false});
+                ytStore.createIndex("cached","cached",{unique:false}); 
+                ytStore.createIndex("lastPlayed","lastPlayed",{unique:false});
+                ytStore.createIndex("uploader","uploader",{unique:false});
+                ytStore.createIndex("thumbnailURL","thumbnailURL",{unique:false});
+            } 
+        } 
+    }) 
+    return db;
+}
 
-function updateMediaSession(title, uploader, thumbnailURL) {
+export function updateMediaSession(title, uploader, thumbnailURL) {
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
             title: title,
@@ -25,7 +44,7 @@ function updateMediaSession(title, uploader, thumbnailURL) {
     }
 }
 
-async function search() {
+export async function search() {
     const query = document.getElementById('searchBox').value;
     if (!query) return;
     /*URI:Uniform Resource Identifier
@@ -41,30 +60,7 @@ async function search() {
     displayVideos(videos);
 }
 
-
-function displayVideos(videos) {
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = videos.map(v => `
-        <div class="video-item" onclick='fetchVideo(
-        "${v.id}", 
-        ${JSON.stringify(v.title)}, 
-        ${JSON.stringify(v.description || '')}, 
-        ${JSON.stringify(v.uploader || '')},
-        "${v.thumbnail}"
-        )'>
-            <img src="${v.thumbnail}" alt="${v.title}">
-            <div class="video-details">
-                <h3>${v.title}</h3>
-                <small>${v.uploader || '不明'}</small><br>
-                <small>${formatViews(v.view_count)}回視聴</small>
-            </div>
-        </div>
-    `).join('');
-}
-
-
-
-async function fetchVideo(VideoId, title, description, uploader, thumbnailURL) {
+export async function fetchVideo(VideoId, title, description, uploader, thumbnailURL,duration) {
     currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
     const quality = document.getElementById('qualitySelect').value;
     const url = `/youtube/stream/${VideoId}`;
@@ -87,7 +83,7 @@ async function fetchVideo(VideoId, title, description, uploader, thumbnailURL) {
             const res = await fetch(`/youtube/status/${VideoId}`);
             const json = await res.json();
             if (json.ready) {
-                play(VideoId, quality, title, uploader, thumbnailURL, description);
+                play(VideoId, quality, title, uploader, thumbnailURL, description,duration);
                 return;
             }
         } catch { }
@@ -96,11 +92,19 @@ async function fetchVideo(VideoId, title, description, uploader, thumbnailURL) {
     }
 
 }
-async function play(VideoId, quality, title, uploader, thumbnailURL, description) {
-    isCache=document.getElementById('CacheOption');
+export async function play(VideoId, quality, title, uploader, thumbnailURL, description,duration) {
+    const isCache=document.getElementById('CacheOption');
     //プレイヤーを表示
     const playersection = document.getElementById('playerSection');
     playersection.classList.remove('hidden');
+
+    //動画のメタデータをMapに保存
+    videoMetadata.set(VideoId,{
+        title:title,
+        duration:duration,
+        uploader:uploader,
+        thumbnailURL:thumbnailURL
+    })
 
     //動画情報を表示
     document.getElementById('videoTitle').textContent = title;
@@ -111,7 +115,8 @@ async function play(VideoId, quality, title, uploader, thumbnailURL, description
     const videoPlayer = document.getElementById('videoPlayer');
     videoPlayer.src = `youtube/video/${VideoId}`;
     if(isCache.checked){
-        videoPlayer.src+='?cache=1'
+        videoPlayer.src+='?cache=1';
+        fetch(thumbnailURL+'?Store_thumbnail=1',{mode:'no-cors'});
     }
     try {
         await videoPlayer.play();
@@ -122,7 +127,7 @@ async function play(VideoId, quality, title, uploader, thumbnailURL, description
     loadRelatedVideos(VideoId);
 }
 
-async function loadRelatedVideos(videoId) {
+export async function loadRelatedVideos(videoId) {
     document.getElementById('slidebarTitle').textContent = '関連動画';
 
     const response = await fetch(`youtube/related/${videoId}`);
@@ -133,33 +138,38 @@ async function loadRelatedVideos(videoId) {
     displayVideos(filtered);
 }
 
-function displayVideos(videos) {
+export function displayVideos(videos) {
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = videos.map(v => {
         //シングルクォートをエスケープ
         // /'/gはすべてのシングルクオートを対象にするという意味
         // gはグローバルフラグ、すべての一致を対象にする
         const safeTitle = v.title.replace(/'/g, '\\');
+        const duration=v.duration;
+        const minutes=Math.floor(duration/60);
+        const seconds=duration%60;
         return ` 
-        <div class="video-item" onclick='fetchVideo(
+        <div class="video-item" onclick='app.fetchVideo(
         "${v.id}",
          ${JSON.stringify(safeTitle)},
           ${JSON.stringify(v.description || '')},
            ${JSON.stringify(v.uploader || '')},
-           "${v.thumbnail}"
+           "${v.thumbnail}",
+           "${v.duration}"
            )'>
             <img src="${v.thumbnail}" alt="${v.title}">
             <div class="video-details">
                 <h3>${v.title}</h3>
                 <small>${v.uploader || '不明'}</small><br>
-                <small>${formatViews(v.view_count)}回視聴</small>
+                <small>${formatViews(v.view_count)}回視聴<br></small>
+                <p class="duration">${minutes}:${seconds.toString().padStart(2,'0')}</p>
             </div>
         </div>
     `;
     }).join('');
 }
 
-function formatViews(count) {
+export function formatViews(count) {
     if (!count) return '0';
     return count.toLocaleString();
 }
@@ -175,3 +185,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+export async function saveVideo(videoId,title,duration,uploader,thumbnailURL) {
+    try{
+        const db=await open_db();
+        const tx=db.transaction(["youtube"],'readwrite');
+        const youtube=tx.objectStore('youtube');
+        await youtube.put({
+            videoId,
+            title,
+            duration, //変数名とキーの名前が同じなら省略できる(ES6のオブジェクトプロパティ省略記法)
+            cached:true,
+            lastPlayed:Date.now(),
+            uploader,
+            thumbnailURL
+        })
+        await tx.done;
+    }catch(error){
+        console.log(`保存できませんでした。${error}`);
+    }
+    
+}
+
+navigator.serviceWorker.addEventListener("message",e =>{
+    if(e.data?.type==="CACHED"){
+        const meta=videoMetadata.get(e.data.videoId);
+        if(!meta)return;
+        saveVideo(
+            e.data.videoId,
+            meta.title,
+            meta.duration,
+            meta.uploader,
+            meta.thumbnailURL
+        );
+    }
+} )
+
+window.app={
+    search,
+    fetchVideo
+};

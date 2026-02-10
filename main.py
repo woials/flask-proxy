@@ -8,6 +8,8 @@ app = Flask(__name__)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
 app.register_blueprint(radio,url_prefix='/radio')
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -23,6 +25,7 @@ def weather_page():
 @app.route('/radio')
 def radio_page():
     return render_template('radio.html')
+
 
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
