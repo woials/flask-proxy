@@ -34,13 +34,13 @@ def search_videos(query,max_result=20):
             data=json.loads(line)#jsonに変換
             video_id=data.get('id')
             videos.append({
-                'id':video_id,
+                'videoId':video_id,
                 'title': data.get('title'),
                 #--flat-playlistがないと、動画を検索➡動画ID取得➡各動画の詳細取得を最大クエリ数まで繰り返す
                 #--flat-playlistがあるとサムネイルが取得できないが、サムネイルの配信URLは決まっているので、
                 #ID+サムネイルURLを使ってサムネイルを取得する
                 #わざわざサムネイルを取得するために通信する必要がない(ただアクセスすればいい)ので検索を高速化できる！                
-                'thumbnail': f'https://i.ytimg.com/vi/{video_id}/hqdefault.jpg',
+                'thumbnailURL': f'https://i.ytimg.com/vi/{video_id}/default.jpg',
                 'description': data.get('description'),
                 'duration': data.get('duration'),
                 'uploader': data.get('uploader'),
@@ -59,10 +59,13 @@ def get_related_videos(video_id,max_results=10):
     result=subprocess.run(cmd,capture_output=True,text=True,encoding='utf-8')
     try:
         data=json.loads(result.stdout)
-        title=data.get('title','')
         uploader=data.get('uploader','')
-        #タイトルとチャンネル名から関連動画を探す
-        search_query=f"{title} {uploader}"
+        channel_id=data.get('channel_id','')
+       
+        if(channel_id):
+            search_query=f"{channel_id}"
+        else:
+            search_query=f"{uploader}"
         return search_videos(search_query,max_results)
     except Exception as e:
         print(f"Error fetching related videos: {e}")

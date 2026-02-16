@@ -2,8 +2,15 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox
 
 const isIOS =
   /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  /CriOS|EdgiOS|FxiOS/.test(navigator.userAgent) || //iOS版のchrome,edge,firefox
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// Navigation Preloadを有効化
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    self.registration.navigationPreload.enable()
+  );
+});
 
 // Workboxが正しく読み込まれたか確認
 if (workbox) {
@@ -13,66 +20,87 @@ if (workbox) {
   workbox.core.skipWaiting();
   workbox.core.clientsClaim();
 
-  // 動画配信URL（/video/<video_id>）へのリクエストをキャッシュする
+  // youtubeアプリのhtmlを保存
   workbox.routing.registerRoute(
-    ({ url }) =>
-      url.pathname.includes('/youtube/video/') &&
-      url.searchParams.has('cache'),
+    ({ request, url }) =>
+      request.mode === 'navigate' &&
+      url.pathname.startsWith('/youtube'),
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'youtube-html',
+      plugins: [{
+        async fetchDidFall({ e }) {
+          return await e.preloadResponse;
+        }
+      }
 
-    new workbox.strategies.CacheFirst({
-      cacheName: 'video-storage',
-      fetchOptions: {
-        headers: { 'Range': 'bytes=0-' }
-      },
-      plugins: [
-        new workbox.cacheableResponse.CacheableResponsePlugin({
-          statuses: [200],
-        }),
-        new workbox.rangeRequests.RangeRequestsPlugin(),
-        new workbox.expiration.ExpirationPlugin({
-          maxAgeSeconds: 30 * 24 * 60 * 60
-        }),
+      ]
+    })
+  )
+  // 動画配信URL（/video/<video_id>）へのリクエストをキャッシュする(iOSは除外)
+  if (!isIOS) {
+    workbox.routing.registerRoute(
+      ({ url }) =>
+        url.pathname.includes('/youtube/video/') &&
+        url.searchParams.has('cache'),
 
-        {
-          //indexedDBに動画メタデータを保存する
-          async handlerDidComplete({ request, response }) {
-            if (!response || response.status !== 200) return; //responseがない or 200(ok)ではない➡return
+      new workbox.strategies.CacheFirst({
+        cacheName: 'video-storage',
+        fetchOptions: {
+          headers: { 'Range': 'bytes=0-' }
+        },
+        plugins: [
+          new workbox.cacheableResponse.CacheableResponsePlugin({
+            statuses: [200],
+          }),
+          new workbox.rangeRequests.RangeRequestsPlugin(),
+          new workbox.expiration.ExpirationPlugin({
+            maxAgeSeconds: 30 * 24 * 60 * 60
+          }),
 
-            const url = new URL(request.url);
-            const videoId = url.pathname.split('/').pop();
-            // /youtube/video/abc123 を　["", "youtube", "video", "abc123"]　に分割し、配列の１番後ろの要素を取得(pop)
+          {
+            //indexedDBに動画メタデータを保存する
+            async handlerDidComplete({ request, response }) {
+              if (!response || response.status !== 200) return; //responseがない or 200(ok)ではない➡return
 
-            // self=Service Worker
-            // self.clients.matchAllは"Service Workerに紐づいているmatchAllの条件に合う
-            // クライアント(制御下にあるタブやウィンドウ)をすべて列挙する" 
-            const clientsList = await self.clients.matchAll({
-              type: 'window',
-              includeUncontrolled: true
-            });
+              const url = new URL(request.url);
+              const videoId = url.pathname.split('/').pop();
+              // /youtube/video/abc123 を　["", "youtube", "video", "abc123"]　に分割し、配列の１番後ろの要素を取得(pop)
 
-            for (const client of clientsList) {
-              client.postMessage({
-                type: 'CACHED',
-                videoId
+              // self=Service Worker
+              // self.clients.matchAllは"Service Workerに紐づいているmatchAllの条件に合う
+              // クライアント(制御下にあるタブやウィンドウ)をすべて列挙する" 
+              const clientsList = await self.clients.matchAll({
+                type: 'window',
+                includeUncontrolled: true
               });
+
+              for (const client of clientsList) {
+                client.postMessage({
+                  type: 'CACHED',
+                  videoId
+                });
+              }
             }
           }
-        }
-      ],
-    })
-  );
+        ],
+      })
+    );
+  }
 
   //動画サムネイルをキャッシュに保存
   if (!isIOS) {
     workbox.routing.registerRoute(
-      ({ url,request }) =>
+      ({ url, request }) =>
         url.hostname === 'i.ytimg.com' &&
         url.pathname.startsWith('/vi/') &&
-        url.pathname.endsWith('/hqdefault.jpg') &&
-        url.searchParams.has('Store_thumbnail') ,
-        
+        url.pathname.endsWith('/default.jpg') &&
+        url.searchParams.has('Store_thumbnail'),
+
       new workbox.strategies.CacheFirst({
         cacheName: 'thumbnail-storage',
+        matchOptions: {
+          ignoreSearch: true
+        },
         plugins: [
           new workbox.cacheableResponse.CacheableResponsePlugin({
             statuses: [0, 200],
@@ -87,7 +115,19 @@ if (workbox) {
       })
     )
   }
-
+  workbox.routing.registerRoute(
+    ({ url }) =>
+      url.pathname.includes('/youtube/video/'),
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'video-storage',
+      fetchOptions: {
+        headers: { 'Range': 'bytes=0-' }
+      },
+      plugins: [
+        new workbox.rangeRequests.RangeRequestsPlugin(),
+      ],
+    })
+  );
 
   /*ホーム画面をキャッシュに登録 */
   workbox.routing.registerRoute(
@@ -156,25 +196,4 @@ if (workbox) {
       cacheName: 'Home-icon'
     })
   )
-  // self.addEventListener('fetch',e =>{
-  //   const url=new URL(e.request.url);
-  //   if(url.pathname.includes('/youtube/video') && url.searchParams.has('cache')){
-  //     const strategy=new workbox.strategies.CacheFirst({
-  //       cacheName:'video-storage',
-  //       fetchOptions:{
-  //         headers:{'Range':'bytes=0-'}
-  //       },
-  //       plugins:[
-  //         new workbox.cacheableResponse.CacheableResponsePlugin({
-  //           statuses:[200],
-  //         }),
-  //         new workbox.rangeRequests.RangeRequestsPlugin(),
-  //         new workbox.expiration.ExpirationPlugin({
-  //           maxAgeSeconds:30*24*60*60
-  //         }),
-  //       ],
-  //     });
-  //     e.respondWith(strategy.handle({e}));
-  //   }
-  // });
 }

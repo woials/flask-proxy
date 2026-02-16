@@ -228,6 +228,8 @@ video {
 
 .options{
     display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #000;
 
 }
 .quality{
@@ -251,4 +253,35 @@ video {
     width: fit-content;
     margin: 3px;
     padding: 3px;
+}
+.cache-option{
+    margin-left: 10px;
+}
+.stored-video{
+    margin-left: 20px;
+}
+
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 48px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  z-index: 1000;
+
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+
+.loading-bar.show {
+  transform: translateY(0);
+}
+
+.loading-bar.hide {
+  transform: translateY(-100%);
 }
