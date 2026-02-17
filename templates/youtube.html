@@ -13,7 +13,7 @@
     <section class="container">
         <div>
             <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
-            
+
         </div>
 
         <div class="search-bar">
@@ -23,7 +23,7 @@
         </div>
         <section class="options">
             <div class="quality">
-                <h3>画質設定</h3>
+                <h3 id="quality_title">画質設定</h3>
                 <select id="qualitySelect">
                     <option value="144">144p</option>
                     <option value="240">240p</option>
@@ -33,7 +33,13 @@
                     <option value="1080">1080p</option>
                 </select>
             </div>
-
+            <div class="audio-option">
+                <h3>音声のみ</h3>
+                <label class="slide-switch">
+                    <input type="checkbox" id="AudioOption" />
+                    <span></span>
+                </label>
+            </div>
             <div class="cache-option">
                 <h3>キャッシュ設定</h3>
                 <label class="slide-switch">
@@ -55,11 +61,11 @@
 
             <div class="video-player hidden" id="playerSection">
                 <video id="videoPlayer" controls></video>
+                <audio id="audioPlayer" controls></audio>
                 <div class="video-info">
                     <h2 id="videoTitle"></h2>
                     <small id="videoUploader"></small>
                     <p id="videoDescription"></p>
-
                 </div>
             </div>
             <div class="sidebar scroll-hidden">

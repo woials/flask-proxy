@@ -2,10 +2,11 @@ import { openDB } from 'https://unpkg.com/idb?module';
 let currentVideo = null;
 const videoMetadata = new Map();
 let selected_cachevideo = document.getElementById('StoredVideo');
+let audio_setting = document.getElementById('AudioOption');
 
 export async function open_db() {
     let db;
-    db = await openDB("youtube-DB", 2, {
+    db = await openDB("youtube-DB", 4, {
         upgrade(db) {
             if (!db.objectStoreNames.contains("youtube")) {
                 const ytStore = db.createObjectStore("youtube", { keyPath: 'videoId', });
@@ -15,6 +16,8 @@ export async function open_db() {
                 ytStore.createIndex("lastPlayed", "lastPlayed", { unique: false });
                 ytStore.createIndex("uploader", "uploader", { unique: false });
                 ytStore.createIndex("thumbnailURL", "thumbnailURL", { unique: false });
+                ytStore.createIndex("isVideo","isVideo",{unique:false});
+                ytStore.createIndex("quality","quality",{unique:false});
             }
         }
     })
@@ -68,7 +71,10 @@ export async function fetchVideo(VideoId, title, description, uploader, thumbnai
     await showloading();
     currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
     if (selected_cachevideo.checked) {
-        play(VideoId, null, title, uploader, thumbnailURL, description, duration);
+        const db=await open_db();
+        const record=await db.get("youtube",VideoId);
+        const quality=record.quality;
+        play(VideoId, quality, title, uploader, thumbnailURL, description, duration);
         return;
     }
     const quality = document.getElementById('qualitySelect').value;
@@ -121,18 +127,45 @@ export async function play(VideoId, quality, title, uploader, thumbnailURL, desc
 
     //動画読み込み
     const videoPlayer = document.getElementById('videoPlayer');
-    if (selected_cachevideo.checked) {
-        videoPlayer.src = `youtube/video/${VideoId}?cache=1`
-    } else {
-        videoPlayer.src = `youtube/video/${VideoId}`;
-        if (isCache.checked) {
-            videoPlayer.src += '?cache=1';
-            fetch(thumbnailURL + '?Store_thumbnail=1', { mode: 'no-cors' });
+    const audioPlayer = document.getElementById('audioPlayer');
+    if (quality !== '128' && quality !== '48') { //音声ではない
+        audioPlayer.classList.add('hidden');
+        videoPlayer.classList.remove('hidden');
+        audioPlayer.pause();
+        audioPlayer.src="";
+        if (selected_cachevideo.checked) {//保存した動画を再生
+            videoPlayer.src = `youtube/video/${VideoId}?cache=1`
+        } else {
+            videoPlayer.src = `youtube/video/${VideoId}`;
+            if (isCache.checked) {//キャッシュする
+                videoPlayer.src += '?cache=1';
+                fetch(thumbnailURL + '?Store_thumbnail=1', { mode: 'no-cors' });
+            }
+        }
+    }else{
+        videoPlayer.classList.add('hidden');
+        audioPlayer.classList.remove('hidden');
+        videoPlayer.pause();
+        videoPlayer.src="";
+        if(selected_cachevideo.checked){
+            audioPlayer.src=`youtube/video/${VideoId}?audio=1&cache=1`
+        }else{
+            audioPlayer.src=`youtube/video/${VideoId}?audio=1`;
+            if(isCache.checked){
+                audioPlayer.src+='&cache=1';
+                fetch(thumbnailURL+'?Store_thumbnail=1',{mode:'no-cors'});
+            }
         }
     }
 
+
     try {
-        await videoPlayer.play();
+        if (quality !== '128' && quality !== '48'){
+            await videoPlayer.play();
+        }else{
+            await audioPlayer.play();
+        }
+        
         updateMediaSession(title, uploader, thumbnailURL);
     } catch (error) {
         console.error("動画の再生に失敗しました:", error);
@@ -215,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-export async function saveVideo(videoId, title, duration, uploader, thumbnailURL) {
+export async function saveVideo(videoId, title, duration, uploader, thumbnailURL,isVideo,quality) {
     try {
         const db = await open_db();
         const tx = db.transaction("youtube", 'readwrite');
@@ -227,7 +260,9 @@ export async function saveVideo(videoId, title, duration, uploader, thumbnailURL
             cached: true,
             lastPlayed: Date.now(),
             uploader,
-            thumbnailURL
+            thumbnailURL,
+            isVideo,
+            quality
         })
         await tx.done;
         console.log("保存しました");
@@ -237,7 +272,7 @@ export async function saveVideo(videoId, title, duration, uploader, thumbnailURL
 
 }
 export async function getIndexedDB() {
-    const db = await openDB("youtube-DB", 2);
+    const db = await open_db();
     const tx = db.transaction("youtube", 'readonly');
     const store = tx.objectStore("youtube");
     const Alldata = await store.getAll();
@@ -248,14 +283,20 @@ export async function getIndexedDB() {
 // Service Workerから送信されたmessageを受信➡indexedDBに動画メタデータを保存
 navigator.serviceWorker.addEventListener("message", e => {
     if (e.data?.type === "CACHED") {
+        const videoId=e.data.videoId;
         const meta = videoMetadata.get(e.data.videoId);
         if (!meta) return;
+        const quality=document.getElementById('qualitySelect').value;
+        const isVideo=!(quality==='128' || quality==='48');
         saveVideo(
             e.data.videoId,
             meta.title,
             meta.duration,
             meta.uploader,
-            meta.thumbnailURL
+            meta.thumbnailURL,
+            isVideo,
+            quality
+
         );
         noticestored();
     }
@@ -266,40 +307,72 @@ selected_cachevideo.addEventListener('change', async () => {
     if (selected_cachevideo.checked) {
         const data = await getIndexedDB();
         displayVideos(data);
-    }else{
+    } else {
         const resultsDiv = document.getElementById('results');
         resultsDiv.innerHTML = '';
     }
 });
 
+audio_setting.addEventListener('change', () => {
+    const title = document.getElementById('quality_title');
+    const options = document.getElementById('qualitySelect');
+    const audio_settings = [
+        { val: '128', text: '128kbps' },
+        { val: '48', text: '48kbps' }
+    ]
+    const video_settings = [
+        { val: '144', text: '144p' },
+        { val: '240', text: '240p' },
+        { val: '360', text: '360p' },
+        { val: '480', text: '480p' },
+        { val: '720', text: '720p' },
+        { val: '1080', text: '1080p' },
+    ]
+    if (audio_setting.checked) {
+        title.textContent = "音質設定";
+        options.innerHTML = audio_settings.map(d =>
+            `<option value="${d.val}">${d.text}</option>"`
+        ).join('');
+    } else {
+        title.textContent = "画質設定";
+        options.innerHTML = video_settings.map(d =>
+            `<option value="${d.val}">${d.text}</option>"`
+        ).join('');
+    }
+})
+/*〇 map
+    mapは”配列のすべての要素にアクセスして処理をし、あたらしい配列を作るメソッド
+    audio_settingsの配列にアクセスし、<option value=・・・>という文字列を生成する
+    そのままだと配列のままなので、joinでカンマを除いた１つの文字列に変換する
+    その文字列をinnerHTMLで<select>に流し込む”*/
 async function showloading() {
-    const video_info=document.getElementById('video-info');
-    const video_info_css=document.querySelector('.loading-bar');
+    const video_info = document.getElementById('video-info');
+    const video_info_css = document.querySelector('.loading-bar');
     video_info.classList.remove("hide");
     video_info.classList.add('show');
-    video_info_css.style.backgroundColor="rgb(0,255,255,0.5)";
-    video_info.textContent="準備中...";
+    video_info_css.style.backgroundColor = "rgb(0,255,255,0.5)";
+    video_info.textContent = "準備中...";
     // requestAnimationFrame:ブラウザの描画更新に合わせてこの関数を実行する
     // dxlibのScreenFlip()に近いもの
     return new Promise(r => requestAnimationFrame(r));
 
 }
 async function deleteloading() {
-    const video_info=document.getElementById('video-info');
-    const video_info_css=document.querySelector('.loading-bar');
+    const video_info = document.getElementById('video-info');
+    const video_info_css = document.querySelector('.loading-bar');
     video_info.classList.remove('show')
     video_info.classList.add('hide');
-    video_info.textContent="";
-    video_info_css.style.backgroundColor="rgb(0,255,255,0.5)";
+    video_info.textContent = "";
+    video_info_css.style.backgroundColor = "rgb(0,255,255,0.5)";
     return new Promise(r => requestAnimationFrame(r));
 }
 async function noticestored() {
-    const video_info=document.getElementById('video-info');
-    const video_info_css=document.querySelector('.loading-bar');
+    const video_info = document.getElementById('video-info');
+    const video_info_css = document.querySelector('.loading-bar');
     video_info.classList.remove("hide");
     video_info.classList.add('show')
-    video_info_css.style.backgroundColor="rgb(0,255,0,0.5)";
-    video_info.textContent="保存しました";
+    video_info_css.style.backgroundColor = "rgb(0,255,0,0.5)";
+    video_info.textContent = "保存しました";
     setTimeout(() => { //3秒が経過したらクラスを変更
         video_info.classList.remove('show');
         video_info.classList.add('hide');

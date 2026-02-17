@@ -12,6 +12,7 @@ SAVE_DIR="static/videos"
 download_lock=threading.Lock()
 prevVideo={}
 video_states={}
+
 # 保存用ディレクトリの作成
 if not os.path.exists(SAVE_DIR):
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -32,67 +33,104 @@ def related(video_id):
     return jsonify(videos)
 @youtube.route('/stream/<video_id>',methods=['POST'])
 def stream_video(video_id):
-    video_states[video_id]={
-        "status":"downloading",
-        "height":None
-    }
-    
     # クエリパラメータから画質を取得(デフォルトは360p)
     data=request.get_json() #POSTのデータを取得
     quality=data.get("quality") #その中にあるqualityを取得
     
+    is_video_mode=quality not in('128','48')
+    video_states[video_id]={
+        "status":"downloading",
+        "height":None,
+        "isVideo":is_video_mode
+    }
     if not all(c.isalnum() or c in "-_" for c in video_id):
         abort(400, description="Invalid video ID")
     
     url=f"https://www.youtube.com/watch?v={video_id}"
-    format_selector = f'bestvideo[height<={quality}][vcodec^=avc1]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best[height<={quality}]'
-
+    if is_video_mode:
+        format_selector = f'bestvideo[height<={quality}][vcodec^=avc1]+bestaudio[ext=m4a]/best[height<={quality}][ext=mp4]/best[height<={quality}]'
+    else:
+        format_selector='bestaudio[ext=m4a]/bestaudio'
     # ダウンロードできる最高画質を調べる
     with yt_dlp.YoutubeDL({
         'quiet':True,
         'format':format_selector,
     }) as ydl:
-        try:
-            info=ydl.extract_info(url,download=False)
-            # 選択されたフォーマットの実際の高さを取得
-            if 'requested_formats' in info:
-                # 映像と音声が分離している場合
-                actual_height = info['requested_formats'][0].get('height', quality)
-            else:
-                # 単一フォーマットの場合
-                actual_height = info.get('height', quality)
-        except Exception as e:
-            return jsonify({"error": f"情報取得失敗: {str(e)}"}), 500
-    # 画質ごとにファイル名を分ける
-    file_name=f"{video_id}_{actual_height}p.mp4"
-    file_path=os.path.join(SAVE_DIR,file_name)
+        if is_video_mode:
+            try: #ファイル名に解像度を乗せたいのでydl.extract_infoで取得
+                info=ydl.extract_info(url,download=False)
+                # 選択されたフォーマットの実際の高さを取得
+                if 'requested_formats' in info:
+                    # 映像と音声が分離している場合
+                    actual_height = info['requested_formats'][0].get('height', quality)
+                else:
+                    # 単一フォーマットの場合
+                    actual_height = info.get('height', quality)
+            except Exception as e:
+                return jsonify({"error": f"情報取得失敗: {str(e)}"}), 500
+            # 画質ごとにファイル名を分ける
+            file_name=f"{video_id}_{actual_height}p.mp4"
+            file_path=os.path.join(SAVE_DIR,file_name)
+        else:
+            file_name=f"{video_id}_{quality}.m4a" # m4aはAAC+音声メタデータが入ったもの。データに対するインデックスがあるから再生が安定する
+            file_path=os.path.join(SAVE_DIR,file_name)
+            
+            
     
     with download_lock:
         if not os.path.exists(file_path):
-            ydl_options={
-            'format':format_selector,
-            # ネットワークエラー時に少し粘る設定を追加
-            'retries': 10,
-            'fragment_retries': 10,
-            'outtmpl':file_path,
-            'merge_output_format':'mp4',
-            'ffmpeg_location':'./ffmpeg.exe',
-            'quiet':True,
-            'no_warnings':True,
-            'nocheckcertificate': True,
-            'geo_bypass': True,
-            'headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            if is_video_mode:
+                ydl_options={
+                'format':format_selector,
+                # ネットワークエラー時に少し粘る設定を追加
+                'retries': 10,
+                'fragment_retries': 10,
+                'outtmpl':file_path,
+                'merge_output_format':'mp4',
+                'ffmpeg_location':'./ffmpeg.exe',
+                'quiet':True,
+                'no_warnings':True,
+                'nocheckcertificate': True,
+                'geo_bypass': True,
+                'headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    }
                 }
-            }
+            else:
+                ydl_options={
+                    'format':format_selector,
+                    'postprocessors':[{
+                        'key':'FFmpegExtractAudio',
+                        'preferredcodec':'m4a',
+                        'preferredquality':quality,
+                    }],
+                    'outtmpl':file_path,
+                    'ffmpeg_location':'./ffmpeg.exe',
+                    'retries': 10,
+                    'fragment_retries': 10,
+                    'quiet':True,
+                    'no_warnings':True,
+                    'nocheckcertificate': True,
+                    'geo_bypass': True,
+                    'postprocessor_args':[
+                        '-movflags','+faststart',
+                    ],
+                    'headers': {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        }
+                }
             try:
                 with yt_dlp.YoutubeDL(ydl_options) as ydl:
                     ydl.download([url])
                     isCached=True
                     video_states[video_id]["status"]="ready"
-                    video_states[video_id]["height"]=actual_height
+                    if is_video_mode:
+                        video_states[video_id]["height"]=actual_height
+                    else:
+                        video_states[video_id]["height"]=quality
             except Exception as e:
                 video_states[video_id]["status"]="error"
+                print(f"ダウンロードエラー{e}")
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     return jsonify({"error":str(e)}),500
@@ -120,7 +158,10 @@ def serve_video(video_id):
         abort(404)
     
     actual_height=state["height"]
-    file_name=f"{video_id}_{actual_height}p.mp4"
+    if state["isVideo"]:
+        file_name=f"{video_id}_{actual_height}p.mp4"
+    else:
+        file_name=f"{video_id}_{actual_height}.m4a"
     return send_from_directory(SAVE_DIR,file_name)
 
 #動画が取得できたかのフラグを送信

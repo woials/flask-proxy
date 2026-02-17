@@ -41,7 +41,7 @@ if (workbox) {
     workbox.routing.registerRoute(
       ({ url }) =>
         url.pathname.includes('/youtube/video/') &&
-        url.searchParams.has('cache'),
+        (url.searchParams.has('cache') || url.searchParams.has('audio')),
 
       new workbox.strategies.CacheFirst({
         cacheName: 'video-storage',
@@ -115,6 +115,7 @@ if (workbox) {
       })
     )
   }
+
   workbox.routing.registerRoute(
     ({ url }) =>
       url.pathname.includes('/youtube/video/'),
@@ -128,6 +129,21 @@ if (workbox) {
       ],
     })
   );
+
+  workbox.routing.registerRoute(
+    ({url})=>
+      url.pathname==='/static/js/script.js',
+    new workbox.strategies.CacheFirst({
+      cacheName:'youtube-js'
+    })
+  )
+  workbox.routing.registerRoute(
+    ({url})=>
+      url.pathname==='/static/css/style.css',
+    new workbox.strategies.CacheFirst({
+      cacheName:'youtube-css'
+    })
+  )
 
   /*ホーム画面をキャッシュに登録 */
   workbox.routing.registerRoute(
