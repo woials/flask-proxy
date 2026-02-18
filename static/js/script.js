@@ -287,7 +287,12 @@ navigator.serviceWorker.addEventListener("message", e => {
         const meta = videoMetadata.get(e.data.videoId);
         if (!meta) return;
         const quality=document.getElementById('qualitySelect').value;
-        const isVideo=!(quality==='128' || quality==='48');
+        let isVideo;
+        if(quality==='128' || quality==='48'){
+            isVideo="false";
+        }else{
+            isVideo="true";
+        }
         saveVideo(
             e.data.videoId,
             meta.title,
@@ -306,11 +311,17 @@ navigator.serviceWorker.addEventListener("message", e => {
 selected_cachevideo.addEventListener('change', async () => {
     if (selected_cachevideo.checked) {
         const data = await getIndexedDB();
-        displayVideos(data);
-    } else {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = '';
-    }
+        if(audio_setting.checked){
+            const filtered=data.filter(d=>d.isVideo==="false");
+            displayVideos(filtered);
+
+        }else{
+            const filtered=data.filter(d=>d.isVideo==="true");
+            displayVideos(filtered);
+
+        }
+        
+    } 
 });
 
 audio_setting.addEventListener('change', () => {

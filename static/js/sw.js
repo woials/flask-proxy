@@ -133,7 +133,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({url})=>
       url.pathname==='/static/js/script.js',
-    new workbox.strategies.CacheFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName:'youtube-js'
     })
   )
