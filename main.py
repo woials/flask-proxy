@@ -2,20 +2,26 @@ from flask import Flask,render_template,redirect,url_for,send_from_directory
 from blueprint.youtube import youtube
 from blueprint.weather import weather
 from blueprint.radio import radio
-
+import os
 
 app = Flask(__name__)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
 app.register_blueprint(radio,url_prefix='/radio')
 
+basedir=os.path.dirname(os.path.abspath(__file__))
 
 @app.route('/')
 def index():
     return render_template('index.html')
 @app.route('/sw.js')
 def serve_sw():
-    return send_from_directory('static/js','sw.js',mimetype='application/javascript')
+    sw_path=os.path.join(basedir,'static','js')
+    print(f"DEBUG: Looking for sw.js in {sw_path}") # コンテナのログで確認用
+    
+    resp=send_from_directory(sw_path,'sw.js',mimetype='application/javascript')
+    resp.headers['Service-Worker-Allowed']='/'
+    return resp
 @app.route('/youtube')
 def youtube_page():
     return render_template('youtube.html')

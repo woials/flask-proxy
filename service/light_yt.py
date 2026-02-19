@@ -12,6 +12,8 @@ def search_videos(query,max_result=20):
         '-j',
         '--flat-playlist',
         '--print-json',
+        '--extractor-args',
+        'youtube:lang=ja',
         # ライブ配信を除外するフィルタ
         '--match-filter',
         'live_status == "not_live"',
