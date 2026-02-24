@@ -8,6 +8,7 @@ let video_lists = []
 let audio_lists = []
 let videoPlayer;
 let audioPlayer;
+let isToggleOptions = false;
 
 export async function open_db() {
     let db;
@@ -377,6 +378,19 @@ navigator.serviceWorker.addEventListener("message", e => {
     }
 })
 
+async function showSetting() {
+    const setting = document.querySelector('.options');
+    setting.classList.remove('hidden');
+    return new Promise(r => requestAnimationFrame(r));
+    setting.classList.add('show');
+    
+}
+async function hideSetting() {
+    const setting = document.querySelector('.options');
+    setting.classList.remove('show');
+    setting.classList.add('hidden');
+    
+}
 
 /*〇 map
     mapは”配列のすべての要素にアクセスして処理をし、あたらしい配列を作るメソッド
@@ -431,12 +445,37 @@ function playNext() { //videoIDを返す関数
     }
 }
 
-
+async function deleteIndexedDB() {
+    const db = await open_db();
+    const tx = db.transaction("youtube", 'readwrite');
+    const store = tx.objectStore("youtube");
+    await store.clear();
+    await tx.done;
+    console.log("削除しました");
+}
+async function deleteCache() {
+    const cacheNames = await caches.keys();
+    const deletion = cacheNames.map(name => caches.delete(name));
+    await Promise.all(deletion);
+}
 document.addEventListener('DOMContentLoaded', () => {
     videoPlayer = document.getElementById('videoPlayer');
     audioPlayer = document.getElementById('audioPlayer');
     selected_cachevideo = document.getElementById('StoredVideo');
     audio_setting = document.getElementById('AudioOption');
+    document.getElementById('droptable').addEventListener('click', async () => {
+        if (window.confirm("キャッシュに保存した動画をすべて削除します。よろしいですか？")) {
+            await deleteIndexedDB();
+            await deleteCache();
+            const results = document.getElementById('results');
+            results.innerHTML = "";
+        }
+    });
+    document.querySelector('.toggleoption').addEventListener('click', () => {
+       const options=document.querySelector('.options');
+       options.classList.toggle('show');
+    });
+
 
     // キャッシュした動画を一覧表示
     selected_cachevideo.addEventListener('change', async () => {

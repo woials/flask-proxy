@@ -21,41 +21,47 @@
 
             <button id="search" onclick="app.search()">検索</button>
         </div>
-        <section class="options">
-            <div class="quality">
-                <h3 id="quality_title">画質設定</h3>
-                <select id="qualitySelect">
-                    <option value="144">144p</option>
-                    <option value="240">240p</option>
-                    <option value="360">360p</option>
-                    <option value="480">480p</option>
-                    <option value="720">720p</option>
-                    <option value="1080">1080p</option>
-                </select>
-            </div>
-            <div class="audio-option">
-                <h3>音声のみ</h3>
-                <label class="slide-switch">
-                    <input type="checkbox" id="AudioOption" />
-                    <span></span>
-                </label>
-            </div>
-            <div class="cache-option">
-                <h3>キャッシュ設定</h3>
-                <label class="slide-switch">
-                    <input type="checkbox" id="CacheOption" />
-                    <span></span>
-                </label>
-            </div>
-            <div class="stored-video">
-                <h3>保存済みの動画を表示する</h3>
-                <label class="slide-switch">
-                    <input type="checkbox" id="StoredVideo" />
-                    <span></span>
-                </label>
-            </div>
-        </section>
-
+        <div class="settings">
+            <button class="toggleoption">詳細設定</button>
+            <section class="options">
+                <div class="quality">
+                    <h3 id="quality_title">画質設定</h3>
+                    <select id="qualitySelect">
+                        <option value="144">144p</option>
+                        <option value="240">240p</option>
+                        <option value="360">360p</option>
+                        <option value="480">480p</option>
+                        <option value="720">720p</option>
+                        <option value="1080">1080p</option>
+                    </select>
+                </div>
+                <div class="audio-option">
+                    <h3>音声のみ</h3>
+                    <label class="slide-switch">
+                        <input type="checkbox" id="AudioOption" />
+                        <span></span>
+                    </label>
+                </div>
+                <div class="cache-option">
+                    <h3>キャッシュ設定</h3>
+                    <label class="slide-switch">
+                        <input type="checkbox" id="CacheOption" />
+                        <span></span>
+                    </label>
+                </div>
+                <div class="stored-video">
+                    <h3>保存済みの動画を表示する</h3>
+                    <label class="slide-switch">
+                        <input type="checkbox" id="StoredVideo" />
+                        <span></span>
+                    </label>
+                </div>
+                <div class="drop-table">
+                    <h3>キャッシュに保存したデータを削除する</h3>
+                    <button id="droptable">削除</button>
+                </div>
+            </section>
+        </div>
 
         <div class="main-content">
 
@@ -74,6 +80,7 @@
             </div>
         </div>
     </section>
+
 
     <script type="module" src="{{url_for('static',filename='js/script.js')}}"></script>
 </body>

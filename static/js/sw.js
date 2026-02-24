@@ -25,7 +25,7 @@ if (workbox) {
     ({ request, url }) =>
       request.mode === 'navigate' &&
       url.pathname.startsWith('/youtube'),
-    new workbox.strategies.NetworkFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'youtube-html',
       plugins: [{
         async fetchDidFall({ e }) {
@@ -140,7 +140,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({url})=>
       url.pathname==='/static/css/style.css',
-    new workbox.strategies.CacheFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName:'youtube-css'
     })
   )
@@ -150,7 +150,7 @@ if (workbox) {
     ({ request, url }) =>
       request.mode === 'navigate' &&
       url.pathname === '/',
-    new workbox.strategies.NetworkFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'Home-html'
     })
   )
@@ -181,7 +181,7 @@ if (workbox) {
     ({ request, url }) =>
       request.mode === 'navigate' &&
       url.pathname.startsWith('/weather/web'),
-    new workbox.strategies.NetworkFirst({
+    new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'weather-html',
     })
   );

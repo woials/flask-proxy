@@ -234,7 +234,6 @@ video {
 }
 .quality{
     display: block;
-    margin-right: 10%;
 }
 @media(min-width:800px){
     .video-player{
@@ -254,12 +253,7 @@ video {
     margin: 3px;
     padding: 3px;
 }
-.cache-option{
-    margin-left: 10px;
-}
-.stored-video{
-    margin-left: 20px;
-}
+
 
 .loading-bar {
   position: fixed;
@@ -285,3 +279,35 @@ video {
 .loading-bar.hide {
   transform: translateY(-100%);
 }
+
+.drop-table #droptable{
+    padding-left: 8px;
+    padding-right: 8px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    background: orange;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+
+.options {
+  display: flex; /* display:noneではなくflexのままにする */
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #000;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.options.show {
+  max-height: 300px; /* 十分な高さ */
+  opacity: 1;
+}
+
