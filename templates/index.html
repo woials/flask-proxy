@@ -1,28 +1,49 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="{{url_for('static',filename='manifest.json')}}">
+    <link rel="stylesheet" href="{{url_for('static',filename='css/home.css')}}">
     <title>Document</title>
 </head>
+
 <body>
-    <a href="/youtube"><img src="{{url_for('static',filename='youtube.png')}}" alt=""></a>
-    <a href="/weather/web/weather"><img src="{{url_for('static',filename='weather.png')}}" alt=""></a>
-    <a href="/radio/web/radio"><img src="{{url_for('static',filename='radio.png')}}" alt=""></a>
+<div class="container">
+    <a href="/youtube" class="link-wrapper">
+        <img src="{{url_for('static',filename='youtube.png')}}" alt="">
+        <p class="title">YouTube</p>
+    </a>
+</div>
+
+<div class="container">
+    <a href="/weather/web/weather" class="link-wrapper">
+        <img src="{{url_for('static',filename='weather.png')}}" alt="">
+        <p class="title">天気予報</p>
+    </a>
+</div>
+
+<div class="container">
+    <a href="/radio/web/radio" class="link-wrapper">
+        <img src="{{url_for('static',filename='radio.png')}}" alt="">
+        <p class="title">ラジオニュース</p>
+    </a>
+</div>
 
 </body>
 <script>
-    if('serviceWorker' in navigator){
-        window.addEventListener('load',()=>{
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
-            .then(registration =>{
-                console.log("ServiceWorker登録成功：",registration.scope);
-            })
-            .catch(error =>{
-                console.log("ServiceWorker登録失敗：",error);
-            });
+                .then(registration => {
+                    console.log("ServiceWorker登録成功：", registration.scope);
+                })
+                .catch(error => {
+                    console.log("ServiceWorker登録失敗：", error);
+                });
         });
     } 
 </script>
+
 </html>

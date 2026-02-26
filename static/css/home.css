@@ -1,0 +1,28 @@
+/* 親要素をフレックスボックスにする */
+.link-wrapper {
+    display: flex;         /* 横並びにする */
+    align-items: center;   /* 上下の中央を揃える */
+    text-decoration: none; /* リンクの下線を消す */
+    color: #333;           /* 文字色 */
+    padding: 10px;         /* 内側の余白（クリック範囲になります） */
+}
+
+/* アイコンのサイズ調整 */
+.icon {
+    width: 40px;           /* お好みのサイズに */
+    height: 40px;
+    margin-right: 15px;    /* アイコンと文字の間の隙間 */
+}
+
+/* タイトルの余白をリセット */
+.title {
+    margin: 0;             /* pタグ特有の上下余白を消して中央を出しやすくする */
+    font-size: 1.1rem;
+    margin-left: 10px;;
+}
+
+/* マウスを乗せた時の演出（任意） */
+.container:hover {
+    background-color: #f9f9f9;
+    cursor: pointer;
+}

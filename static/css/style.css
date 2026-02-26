@@ -56,8 +56,8 @@ body {
 
 #searchBox {
     flex: 1;
-    padding: 12px;
-    font-size: 16px;
+    padding: 2px;
+    font-size: 10px;
     border: 1px solid var(--border-color);
     background: var(--surface-color);
     color: var(--text-color);
@@ -296,8 +296,7 @@ video {
 .options {
   display: flex; /* display:noneではなくflexのままにする */
   flex-wrap: wrap;
-  justify-content: space-evenly;
-  align-items: center;
+  justify-content: center;
   margin-bottom: 10px;
   border-bottom: 1px solid #000;
   max-height: 0;
@@ -309,5 +308,34 @@ video {
 .options.show {
   max-height: 300px; /* 十分な高さ */
   opacity: 1;
+  background-color: rgba(240,131,0,0.2);
+  text-align: center;
 }
 
+.header-controls {
+    display: flex;
+    justify-content: space-between; /* これで「ホーム」が左、「設定」が右になります */
+    align-items: center;           /* 上下の中心を揃えて同じ高さに見せます */
+    padding: 10px 20px;            /* 画面端に密着しすぎないよう余白を調整 */
+    width: 100%;                   /* 横幅いっぱい */
+    box-sizing: border-box;
+}
+
+.home img {
+    display: block;
+    height: 30px; /* アイコンのサイズはお好みで */
+    width: auto;
+}
+
+.settings {
+    position: relative; /* 詳細設定メニュー(options)をボタンの下に出すために必要 */
+}
+
+/* 詳細設定メニューが右端からはみ出さないように調整 */
+.options {
+    position: absolute;
+    right: 0;           /* 右側に合わせる */
+    top: 100%;          /* ボタンのすぐ下に配置 */
+    z-index: 100;       /* 他の要素より上に表示 */
+    /* 背景色や枠線などは既存のスタイルを維持してください */
+}

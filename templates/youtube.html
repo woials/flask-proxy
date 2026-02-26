@@ -11,9 +11,51 @@
 <body>
     <div class="loading-bar hide" id="video-info"></div>
     <section class="container">
-        <div>
-            <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
-
+        <div class="header-controls">
+            <div>
+                <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
+            </div>
+            <div class="settings">
+                <button class="toggleoption">詳細設定</button>
+                <section class="options">
+                    <div class="quality">
+                        <h3 id="quality_title">画質設定</h3>
+                        <select id="qualitySelect">
+                            <option value="144">144p</option>
+                            <option value="240">240p</option>
+                            <option value="360">360p</option>
+                            <option value="480">480p</option>
+                            <option value="720">720p</option>
+                            <option value="1080">1080p</option>
+                        </select>
+                    </div>
+                    <div class="audio-option">
+                        <h3>音声のみ</h3>
+                        <label class="slide-switch">
+                            <input type="checkbox" id="AudioOption" />
+                            <span></span>
+                        </label>
+                    </div>
+                    <div class="cache-option">
+                        <h3>キャッシュ設定</h3>
+                        <label class="slide-switch">
+                            <input type="checkbox" id="CacheOption" />
+                            <span></span>
+                        </label>
+                    </div>
+                    <div class="stored-video">
+                        <h3>保存済みの動画を表示する</h3>
+                        <label class="slide-switch">
+                            <input type="checkbox" id="StoredVideo" />
+                            <span></span>
+                        </label>
+                    </div>
+                    <div class="drop-table">
+                        <h3>キャッシュに保存したデータを削除する</h3>
+                        <button id="droptable">削除</button>
+                    </div>
+                </section>
+            </div>
         </div>
 
         <div class="search-bar">
@@ -21,47 +63,7 @@
 
             <button id="search" onclick="app.search()">検索</button>
         </div>
-        <div class="settings">
-            <button class="toggleoption">詳細設定</button>
-            <section class="options">
-                <div class="quality">
-                    <h3 id="quality_title">画質設定</h3>
-                    <select id="qualitySelect">
-                        <option value="144">144p</option>
-                        <option value="240">240p</option>
-                        <option value="360">360p</option>
-                        <option value="480">480p</option>
-                        <option value="720">720p</option>
-                        <option value="1080">1080p</option>
-                    </select>
-                </div>
-                <div class="audio-option">
-                    <h3>音声のみ</h3>
-                    <label class="slide-switch">
-                        <input type="checkbox" id="AudioOption" />
-                        <span></span>
-                    </label>
-                </div>
-                <div class="cache-option">
-                    <h3>キャッシュ設定</h3>
-                    <label class="slide-switch">
-                        <input type="checkbox" id="CacheOption" />
-                        <span></span>
-                    </label>
-                </div>
-                <div class="stored-video">
-                    <h3>保存済みの動画を表示する</h3>
-                    <label class="slide-switch">
-                        <input type="checkbox" id="StoredVideo" />
-                        <span></span>
-                    </label>
-                </div>
-                <div class="drop-table">
-                    <h3>キャッシュに保存したデータを削除する</h3>
-                    <button id="droptable">削除</button>
-                </div>
-            </section>
-        </div>
+
 
         <div class="main-content">
 
@@ -81,31 +83,31 @@
         </div>
     </section>
 
-<script>
-    var isModern = false;
-    try {
+    <script>
+        var isModern = false;
+        try {
 
-        if (typeof BigInt !== "undefined" && typeof WebAssembly !== "undefined") {
-            // さらに async 構文のチェック
-            new Function('async () => {}');
-            isModern = true;
+            if (typeof BigInt !== "undefined" && typeof WebAssembly !== "undefined") {
+                // さらに async 構文のチェック
+                new Function('async () => {}');
+                isModern = true;
+            }
+        } catch (e) {
+            isModern = false;
         }
-    } catch (e) {
-        isModern = false;
-    }
 
-    var s = document.createElement('script');
-    if (isModern) {
-        s.type = 'module';
-        s.src = '/static/js/script.js';
+        var s = document.createElement('script');
+        if (isModern) {
+            s.type = 'module';
+            s.src = '/static/js/script.js';
 
-    } else {
-        s.src = '/static/js/legacy_script.js';
-        // iOS 12以前はここに来る
+        } else {
+            s.src = '/static/js/legacy_script.js';
+            // iOS 12以前はここに来る
 
-    }
-    document.head.appendChild(s);
-</script>
+        }
+        document.head.appendChild(s);
+    </script>
 
 
 
