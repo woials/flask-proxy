@@ -10,6 +10,14 @@ let videoPlayer;
 let audioPlayer;
 let isToggleOptions = false;
 
+console.log("ES6 module loaded");
+window.app = {
+    search,
+    fetchVideo
+};
+console.log(document.getElementById('qualitySelect').value);
+console.log(document.getElementById('StoredVideo'));
+
 export async function open_db() {
     let db;
     db = await openDB("youtube-DB", 4, {
@@ -140,14 +148,12 @@ export async function search() {
     const videos = await response.json();
     document.getElementById('slidebarTitle').textContent = "検索結果";
     displayVideos(videos);
-
-
-
 }
 
 export async function fetchVideo(VideoId, title, description, uploader, thumbnailURL, duration) {
     await showloading();
-    //currentVideo = { id: VideoId, title, description, uploader, thumbnailURL };
+    const selected_cachevideo = document.getElementById('StoredVideo');
+    const audio_setting = document.getElementById('AudioOption');
     if (selected_cachevideo.checked) {
         const db = await open_db();
         const record = await db.get("youtube", VideoId);
@@ -181,11 +187,12 @@ export async function fetchVideo(VideoId, title, description, uploader, thumbnai
             await new Promise(r => setTimeout(r, 1000));
         }
     }
-
-
 }
+
 export async function play(VideoId, quality, title, uploader, thumbnailURL, description, duration) {
     const isCache = document.getElementById('CacheOption');
+    const selected_cachevideo = document.getElementById('StoredVideo');
+    const audio_setting = document.getElementById('AudioOption');
     //プレイヤーを表示
     const playersection = document.getElementById('playerSection');
     playersection.classList.remove('hidden');
@@ -381,15 +388,16 @@ navigator.serviceWorker.addEventListener("message", e => {
 async function showSetting() {
     const setting = document.querySelector('.options');
     setting.classList.remove('hidden');
-    return new Promise(r => requestAnimationFrame(r));
     setting.classList.add('show');
-    
+    return new Promise(r => requestAnimationFrame(r));
+
+
 }
 async function hideSetting() {
     const setting = document.querySelector('.options');
     setting.classList.remove('show');
     setting.classList.add('hidden');
-    
+
 }
 
 /*〇 map
@@ -406,7 +414,7 @@ async function showloading() {
     video_info.textContent = "準備中...";
     // requestAnimationFrame:ブラウザの描画更新に合わせてこの関数を実行する
     // dxlibのScreenFlip()に近いもの
-    return new Promise(r => requestAnimationFrame(r));
+    //return new Promise(r => requestAnimationFrame(r));
 
 }
 async function deleteloading() {
@@ -416,7 +424,7 @@ async function deleteloading() {
     video_info.classList.add('hide');
     video_info.textContent = "";
     video_info_css.style.backgroundColor = "rgb(0,255,255,0.5)";
-    return new Promise(r => requestAnimationFrame(r));
+    //return new Promise(r => requestAnimationFrame(r));
 }
 async function noticestored() {
     const video_info = document.getElementById('video-info');
@@ -459,7 +467,13 @@ async function deleteCache() {
     await Promise.all(deletion);
 }
 document.addEventListener('DOMContentLoaded', () => {
-    videoPlayer = document.getElementById('videoPlayer');
+    
+});
+document.querySelector('.toggleoption').addEventListener('click', () => {
+    const options = document.querySelector('.options');
+    options.classList.toggle('show');
+});
+videoPlayer = document.getElementById('videoPlayer');
     audioPlayer = document.getElementById('audioPlayer');
     selected_cachevideo = document.getElementById('StoredVideo');
     audio_setting = document.getElementById('AudioOption');
@@ -471,10 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             results.innerHTML = "";
         }
     });
-    document.querySelector('.toggleoption').addEventListener('click', () => {
-       const options=document.querySelector('.options');
-       options.classList.toggle('show');
-    });
+
 
 
     // キャッシュした動画を一覧表示
@@ -569,9 +580,4 @@ document.addEventListener('DOMContentLoaded', () => {
             navigator.mediaSession.playbackState = 'paused';
         });
     }
-});
-
-window.app = {
-    search,
-    fetchVideo
-};
+console.log("ES6 end, app=", window.app);

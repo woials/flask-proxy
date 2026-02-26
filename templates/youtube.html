@@ -81,8 +81,34 @@
         </div>
     </section>
 
+<script>
+    var isModern = false;
+    try {
 
-    <script type="module" src="{{url_for('static',filename='js/script.js')}}"></script>
+        if (typeof BigInt !== "undefined" && typeof WebAssembly !== "undefined") {
+            // さらに async 構文のチェック
+            new Function('async () => {}');
+            isModern = true;
+        }
+    } catch (e) {
+        isModern = false;
+    }
+
+    var s = document.createElement('script');
+    if (isModern) {
+        s.type = 'module';
+        s.src = '/static/js/script.js';
+
+    } else {
+        s.src = '/static/js/legacy_script.js';
+        // iOS 12以前はここに来る
+
+    }
+    document.head.appendChild(s);
+</script>
+
+
+
 </body>
 
 </html>

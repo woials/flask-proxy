@@ -130,6 +130,7 @@ if (workbox) {
     })
   );
 
+  // todo:ES5対応のjsが動くかテスト
   workbox.routing.registerRoute(
     ({url})=>
       url.pathname==='/static/js/script.js',
