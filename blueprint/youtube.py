@@ -43,6 +43,19 @@ def stream_video(video_id):
         "height":None,
         "isVideo":is_video_mode
     }
+    if video_states[video_id]["isVideo"]:
+        file_name=f"{video_id}_{quality}p.mp4"
+        if os.path.exists(os.path.join(SAVE_DIR,file_name)):
+            video_states[video_id]["status"]="ready"
+            video_states[video_id]["height"]=quality
+            return jsonify({"started":True})
+    else:
+        file_name=f"{video_id}_{quality}.m4a"
+        if os.path.exists(os.path.join(SAVE_DIR,file_name)):
+            video_states[video_id]["status"]="ready"
+            video_states[video_id]["height"]=quality
+            return jsonify({"started":True})
+    
     if not all(c.isalnum() or c in "-_" for c in video_id):
         abort(400, description="Invalid video ID")
     
