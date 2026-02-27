@@ -176,6 +176,13 @@ if (workbox) {
       cacheName: 'radio-icon'
     })
   )
+  workbox.routing.registerRoute(
+    ({ url }) =>
+      url.pathname === '/static/css/home.css',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'home-css'
+    })
+  )
 
   /*天気アプリをキャッシュに登録 */
   workbox.routing.registerRoute(
