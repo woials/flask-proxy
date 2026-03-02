@@ -12,3 +12,5 @@ ffmpeg-python
 requests
 gunicorn
 gevent
+python-dotenv
+google-genai

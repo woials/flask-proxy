@@ -2,15 +2,21 @@ from flask import Flask,render_template,redirect,url_for,send_from_directory
 from blueprint.youtube import youtube
 from blueprint.weather import weather
 from blueprint.radio import radio
+from blueprint.gemini import gemini
 import os
 
 app = Flask(__name__)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
 app.register_blueprint(radio,url_prefix='/radio')
-
+app.register_blueprint(gemini,url_prefix='/gemini')
 basedir=os.path.dirname(os.path.abspath(__file__))
 
+@app.after_request
+def add_header(response):
+    # ngrokの警告ページをスキップするためのヘッダー
+    response.headers['ngrok-skip-browser-warning'] = 'true'
+    return response
 @app.route('/')
 def index():
     return render_template('index.html')
