@@ -1,5 +1,4 @@
 Cython>=0.29.21
-faster_whisper==1.2.1
 feedparser==6.0.12
 filelock==3.20.3
 h2==4.3.0
@@ -14,3 +13,4 @@ gunicorn
 gevent
 python-dotenv
 google-genai
+pydantic

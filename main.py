@@ -37,6 +37,9 @@ def weather_page():
 @app.route('/radio')
 def radio_page():
     return render_template('radio.html')
+@app.route("/gemini")
+def gemini_page():
+    return render_template('gemini.html')
 
 
 if __name__=="__main__":

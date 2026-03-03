@@ -7,5 +7,7 @@ services:
       - .:/app  # ← これが魔法の一行：ホストの「.」をコンテナの「/app」に同期
     environment:
       - FLASK_ENV=development # Flask等の場合
+    
     # 開発時は Gunicorn ではなく、リロード機能付きのコマンドで上書きするのがコツです
     command: python main.py
+    

@@ -9,4 +9,4 @@ RUN pip install -r requirements.txt
 COPY . .
 ENV TZ=Asia/Tokyo
 
-CMD ["gunicorn", "-k","gevent","-w", "4", "--timeout", "300", "--keep-alive", "10", "-b", "0.0.0.0:5000", "--access-logfile", "-", "--error-logfile", "-", "main:app"]
+CMD ["gunicorn", "-k", "gevent", "-w", "4", "--timeout", "300", "-b", "0.0.0.0:5000", "main:app"]
