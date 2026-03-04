@@ -4,10 +4,9 @@ import requests
 gemini=Blueprint('gemini',__name__)
 from service.gemini_result import get_gemini_result
 
-@gemini.route('/web/gemini')
+@gemini.route('/ask',methods=['POST'])
 def gemini_page():
-    result=get_gemini_result()
-    params={
-        "gemini_result":result
-    }
-    return render_template('gemini.html',**params)
+    data=request.get_json()
+    query=data.get('query')
+    result=get_gemini_result(query)
+    return jsonify(result.model_dump())

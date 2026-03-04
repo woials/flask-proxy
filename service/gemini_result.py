@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field,TypeAdapter
 from typing import List,Literal
 
 class Paragraph(BaseModel):
@@ -23,14 +23,16 @@ class GeminiArticle(BaseModel):
 load_dotenv()
 client=genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def get_gemini_result():
+def get_gemini_result(query):
     response=client.models.generate_content(
         model="gemini-2.5-flash",
-        contents="2025年の情報セキュリティ10大脅威について説明してください。",
+        contents=query,
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=GeminiArticle,
             #tools=[types.Tool(google_search=types.GoogleSearch())]
         )
     )
-    return response.text
+    json_data=response.candidates[0].content.parts[0].text
+    result=TypeAdapter(GeminiArticle).validate_json(json_data)
+    return result

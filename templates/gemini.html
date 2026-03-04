@@ -1,12 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-    <h1>Gemini Result</h1>
-    <pre>{{ gemini_result }}</pre>
+    <div class="gemini-bar">
+        <input id="searchBox" type="text" placeholder="質問を入力" onkeypress="if(event.key==='Enter') app.ask()">
+        <button id="search" onclick="app.ask()">質問する</button>
+    </div>
+    <section id="head">
+        <h1 id="question"></h1>
+    </section>
+    <section id="top">
+        <h1 id="title"></h1>
+        <p id="summary"></p>
+    </section>
+    <section id="main">
+    </section>
 </body>
+<script src="{{url_for('static',filename='js/gemini.js')}}"></script>
 </html>
