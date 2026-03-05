@@ -1,37 +1,91 @@
 "use strict";
-function ask(){
+var isSent = false;
+function ask() {
+    if (isSent) return;
+    var searchBox = document.getElementById('searchBox')
     var query = document.getElementById('searchBox').value;
-    if(!query) return;
-    document.getElementById('question').textContent=query;
-    var url="/gemini/ask";
-    xhrPostJSON(url,{query:query},function(error,data){
-        if(error){
-            console.log(error);
-            return;
-        }else{
-            createHTML(data);
-        }
-    })
+    if (!query) return;
+    var option=document.getElementById('mode-select').value;
+    searchBox.value = "";
+    searchBox.style.height = 'auto';
+    isSent = true;
+    drawBorder_forQuestion(query);
+    var url = "/gemini/ask";
 
+    if (isSent) {
+        xhrPostJSON(url, { query: query ,option: option}, function (error, data) {
+            isSent = false;
+            if (error) {
+                console.log(error);
+                return;
+            } else {
+                createHTML(data);
+            }
+        })
+    }
 }
 
-function createHTML(data){
-    document.getElementById("title").textContent=data.title;
-    document.getElementById("summary").textContent=data.summary;
-    var main_container=document.getElementById('main');
-    if(main_container.childElementCount>0){
-        main_container.innerHTML=""
-    }
-    for(var i=0; i<data.main_text.length; i++){
-        var block=data.main_text[i]
-        var element=null;
-        if(block.type === 'headline'){
-            element=document.createElement('h2');
-        }else if(block.type === 'paragraph'){
-            element=document.createElement('p');
+var tx = document.getElementById('searchBox');
+tx.addEventListener('input', function () {
+    tx.style.height = 'auto';
+    tx.style.height = tx.scrollHeight + 'px';
+})
+
+tx.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+        if (e.shiftKey || e.isComposing) {
+            return;
         }
-        element.textContent=block.text;
+        e.preventDefault();
+        ask();
+    }
+})
+
+function drawBorder_forQuestion(query){
+    var question=document.getElementById('question');
+    question.textContent=query;
+    question.style.display='inline-block'
+    question.style.maxWidth='calc(100% - 20px)'
+    question.style.textAlign='left'
+    question.style.padding='8px'
+    question.style.boxSizing='border-box'
+    question.style.border='1px solid #ddd';
+    question.style.borderRadius='4px';
+    question.style.backgroundColor='#007aff'
+    question.style.color='white';
+    question.style.border='none';
+}
+
+function createHTML(data) {
+    document.getElementById("title").textContent = data.title;
+    document.getElementById("summary").textContent = data.summary;
+    var main_container = document.getElementById('main');
+    if (main_container.childElementCount > 0) {
+        main_container.innerHTML = ""
+    }
+    for (var i = 0; i < data.main_text.length; i++) {
+        var block = data.main_text[i]
+        var element = null;
+        if (block.type === 'headline') {
+            element = document.createElement('h2');
+        } else if (block.type === 'paragraph') {
+            element = document.createElement('p');
+        }
+        element.textContent = block.text;
         main_container.appendChild(element)
+    }
+}
+
+var modal=document.getElementById('setting-modal');
+function openModal(){
+    modal.style.display='block';
+}
+function closeModal(){
+    modal.style.display='none';
+}
+window.onclick=function(event){
+    if(event.target==modal){
+        closeModal();
     }
 }
 
@@ -85,6 +139,7 @@ function xhrPostJSON(url, body, callback) {
     xhr.send(JSON.stringify(body));
 }
 
-window.app={
-    ask:ask
+window.app = {
+    ask: ask,
+    openModal:openModal
 }

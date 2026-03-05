@@ -8,5 +8,6 @@ from service.gemini_result import get_gemini_result
 def gemini_page():
     data=request.get_json()
     query=data.get('query')
-    result=get_gemini_result(query)
+    option=data.get('option')
+    result=get_gemini_result(query,option)
     return jsonify(result.model_dump())
