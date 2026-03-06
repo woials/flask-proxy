@@ -8,7 +8,7 @@ import os
 app = Flask(__name__)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
-app.register_blueprint(radio,url_prefix='/radio')
+# app.register_blueprint(radio,url_prefix='/radio')
 app.register_blueprint(gemini,url_prefix='/gemini')
 basedir=os.path.dirname(os.path.abspath(__file__))
 
