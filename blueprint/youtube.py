@@ -105,19 +105,22 @@ def stream_video(video_id):
                 'no_warnings':True,
                 'nocheckcertificate': True,
                 'geo_bypass': True,
+				'postprocessor_args':[
+						'-movflags','+faststart',
+					],
                 'headers': {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                     }
                 }
             else:
                 ydl_options={
-                    'format':format_selector,
+                    'format':'bestaudio/best',
                     'postprocessors':[{
                         'key':'FFmpegExtractAudio',
                         'preferredcodec':'m4a',
-                        'preferredquality':quality,
+                        'preferredquality':str(quality),
                     }],
-                    'outtmpl':file_path,
+                    'outtmpl':os.path.join(SAVE_DIR, f"{video_id}_{quality}_tmp.%(ext)s"),
                     'ffmpeg_location':'/usr/bin',
                     'retries': 10,
                     'fragment_retries': 10,
@@ -126,15 +129,24 @@ def stream_video(video_id):
                     'nocheckcertificate': True,
                     'geo_bypass': True,
                     'postprocessor_args':[
+                    	'-b:a',f'{quality}k',
+                    	'-ac','1',
                         '-movflags','+faststart',
                     ],
                     'headers': {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                         }
                 }
+                ydl_options['postprocessor_args'] = [
+                    '-b:a', f'{quality}k',
+                    '-movflags', '+faststart'
+                ]
             try:
                 with yt_dlp.YoutubeDL(ydl_options) as ydl:
                     ydl.download([url])
+                    downloaded_file = os.path.join(SAVE_DIR, f"{video_id}_{quality}_tmp.m4a")
+                    if os.path.exists(downloaded_file):
+                        os.rename(downloaded_file, file_path)
                     isCached=True
                     video_states[video_id]["status"]="ready"
                     if is_video_mode:
@@ -147,35 +159,21 @@ def stream_video(video_id):
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     return jsonify({"error":str(e)}),500
-    
-    # 次の動画を再生した後、前の動画のキャッシュを削除する
-    current_filename=os.path.basename(file_path)
-    for target_file in os.listdir(SAVE_DIR):
-        if target_file!=current_filename:
-            target_fullpath=os.path.join(SAVE_DIR,target_file)
-            try:
-                if os.path.isfile(target_fullpath):
-                    os.remove(target_fullpath)
-                    print(f"削除成功:{target_file}")
-            except Exception as e:
-                print(f"削除スキップ:{target_file}-{e}")
-    
                            
     return jsonify({"started":True})
 
 #動画が取得できたらストリーミング
 @youtube.route('/video/<video_id>')
 def serve_video(video_id):
-    state=video_states.get(video_id)
-    if not state or state["status"]!="ready":
-        abort(404)
-    
-    actual_height=state["height"]
-    if state["isVideo"]:
-        file_name=f"{video_id}_{actual_height}p.mp4"
-    else:
-        file_name=f"{video_id}_{actual_height}.m4a"
-    return send_from_directory(SAVE_DIR,file_name)
+    mimetype="video/mp4"
+    for file in os.listdir(SAVE_DIR):
+        if file.startswith(video_id):
+            if file.endswith(".mp4"):
+                mimetype="video/mp4"
+            else:
+                mimetype="audio/mp4"
+            return send_from_directory(SAVE_DIR,file,mimetype=mimetype,conditional=True)
+    abort(404)
 
 #動画が取得できたかのフラグを送信
 @youtube.route('/status/<video_id>')
