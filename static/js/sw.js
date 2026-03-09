@@ -116,19 +116,7 @@ if (workbox) {
     )
   }
 
-  workbox.routing.registerRoute(
-    ({ url }) =>
-      url.pathname.includes('/youtube/video/'),
-    new workbox.strategies.NetworkFirst({
-      cacheName: 'video-storage',
-      fetchOptions: {
-        headers: { 'Range': 'bytes=0-' }
-      },
-      plugins: [
-        new workbox.rangeRequests.RangeRequestsPlugin(),
-      ],
-    })
-  );
+
 
   // todo:ES5対応のjsが動くかテスト
   workbox.routing.registerRoute(
