@@ -82,10 +82,10 @@ def stream_video(video_id):
             except Exception as e:
                 return jsonify({"error": f"情報取得失敗: {str(e)}"}), 500
             # 画質ごとにファイル名を分ける
-            file_name=f"{video_id}_{actual_height}p.mp4"
+            file_name=f"{video_id} - {actual_height}p.mp4"
             file_path=os.path.join(SAVE_DIR,file_name)
         else:
-            file_name=f"{video_id}_{quality}.m4a" # m4aはAAC+音声メタデータが入ったもの。データに対するインデックスがあるから再生が安定する
+            file_name=f"{video_id} - {quality}.m4a" # m4aはAAC+音声メタデータが入ったもの。データに対するインデックスがあるから再生が安定する
             file_path=os.path.join(SAVE_DIR,file_name)
             
             
@@ -144,7 +144,7 @@ def stream_video(video_id):
             try:
                 with yt_dlp.YoutubeDL(ydl_options) as ydl:
                     ydl.download([url])
-                    downloaded_file = os.path.join(SAVE_DIR, f"{video_id}_{quality}_tmp.m4a")
+                    downloaded_file = os.path.join(SAVE_DIR, f"{video_id} - {quality}_tmp.m4a")
                     if os.path.exists(downloaded_file):
                         os.rename(downloaded_file, file_path)
                     isCached=True
@@ -159,7 +159,29 @@ def stream_video(video_id):
                 if os.path.exists(file_path):
                     os.remove(file_path)
                     return jsonify({"error":str(e)}),500
-                           
+    title=data.get("title",video_id)
+    safe_title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    xml=f"""
+    <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+    <video>
+        <title>{safe_title}</title>
+        <uniqueid type="youtube">{video_id}</uniqueid>
+    </video>
+    """
+    
+    r"""
+    rsplit():右から分割する
+    ('.',1):.を区切りとする。区切るのは1回
+    ➡abc.mp4の場合、[abc],[mp4]になる
+    [0]で拡張子抜きのファイル名を指定し、そこに.nfoを連結する
+    """
+    
+    nfo_path=file_path.rsplit('.',1)[0]+".nfo"
+    try:                       
+        with open(nfo_path,"w",encoding="utf-8") as f:
+            f.write(xml)
+    except Exception as e:
+        print(f"NFO作成エラー：{e}")
     return jsonify({"started":True})
 
 #動画が取得できたらストリーミング

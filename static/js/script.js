@@ -169,7 +169,8 @@ export async function fetchVideo(VideoId, title, description, uploader, thumbnai
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            "quality": quality
+            "quality": quality,
+            "title":title
         })
     })
     if (!startRes.ok) return;

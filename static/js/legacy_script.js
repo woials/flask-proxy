@@ -80,7 +80,7 @@ function fetchVideo(VideoId, title, description, uploader, thumbnailURL, duratio
     var quality = document.getElementById('qualitySelect').value;
     var url = "/youtube/stream/" + VideoId;
     // 画質の取得、動画ダウンロードのリクエストをサーバーに送信
-    xhrPostJSON(url, { quality: quality }, function (error, data) {
+    xhrPostJSON(url, { quality: quality,title:title }, function (error, data) {
         if (error || !data) { // dataがnullのときもエラーとみなす
             console.error("POST失敗:", error);
             return;
