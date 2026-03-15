@@ -163,10 +163,10 @@ def stream_video(video_id):
     safe_title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     xml=f"""
     <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-    <video>
+    <movie>
         <title>{safe_title}</title>
         <uniqueid type="youtube">{video_id}</uniqueid>
-    </video>
+    </movie>
     """
     
     r"""

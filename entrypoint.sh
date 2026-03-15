@@ -7,7 +7,7 @@ set -e
 cd "$(dirname "$0")"
 
 echo "tailscaleを起動しています..."
-sudo tailscale up
+tailscale up
 
 # funnel_initializedファイルが存在しない場合
 if [ ! -f .funnel_initialized ]; then
@@ -23,7 +23,7 @@ if [ ! -f .funnel_initialized ]; then
     # touchコマンドでfunnel_initializedファイルを作成
     touch .funnel_initialized
 fi
-
+. ./venv/bin/activate
 exec ./venv/bin/gunicorn -k gevent -w 2 \
     --timeout 300 \
     --keep-alive 10 \

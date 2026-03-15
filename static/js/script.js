@@ -297,7 +297,7 @@ function createVideoItem(v) {
             v.uploader || '',
             v.thumbnailURL,
             v.duration
-        );
+            );
     });
 
     item.innerHTML = `
@@ -359,32 +359,7 @@ export async function getIndexedDB() {
     return Alldata;
 }
 
-// Service Workerから送信されたmessageを受信➡indexedDBに動画メタデータを保存
-navigator.serviceWorker.addEventListener("message", e => {
-    if (e.data?.type === "CACHED") {
-        const videoId = e.data.videoId;
-        const meta = videoMetadata.get(e.data.videoId);
-        if (!meta) return;
-        const quality = document.getElementById('qualitySelect').value;
-        let isVideo;
-        if (quality === '128' || quality === '48') {
-            isVideo = "false";
-        } else {
-            isVideo = "true";
-        }
-        saveVideo(
-            e.data.videoId,
-            meta.title,
-            meta.duration,
-            meta.uploader,
-            meta.thumbnailURL,
-            isVideo,
-            quality
 
-        );
-        noticestored();
-    }
-})
 
 async function showSetting() {
     const setting = document.querySelector('.options');
@@ -467,118 +442,148 @@ async function deleteCache() {
     const deletion = cacheNames.map(name => caches.delete(name));
     await Promise.all(deletion);
 }
-document.addEventListener('DOMContentLoaded', () => {
-    
-});
-document.querySelector('.toggleoption').addEventListener('click', () => {
-    const options = document.querySelector('.options');
-    options.classList.toggle('show');
-});
-videoPlayer = document.getElementById('videoPlayer');
-    audioPlayer = document.getElementById('audioPlayer');
-    selected_cachevideo = document.getElementById('StoredVideo');
-    audio_setting = document.getElementById('AudioOption');
-    document.getElementById('droptable').addEventListener('click', async () => {
-        if (window.confirm("キャッシュに保存した動画をすべて削除します。よろしいですか？")) {
-            await deleteIndexedDB();
-            await deleteCache();
-            const results = document.getElementById('results');
-            results.innerHTML = "";
-        }
+
+    // Service Workerから送信されたmessageを受信➡indexedDBに動画メタデータを保存
+    if('serviceWorker' in navigator){
+        navigator.serviceWorker.addEventListener("message", e => {
+            if (e.data?.type === "CACHED") {
+                const videoId = e.data.videoId;
+                const meta = videoMetadata.get(e.data.videoId);
+                if (!meta) return;
+                const quality = document.getElementById('qualitySelect').value;
+                let isVideo;
+                if (quality === '128' || quality === '48') {
+                    isVideo = "false";
+                } else {
+                    isVideo = "true";
+                }
+                saveVideo(
+                    e.data.videoId,
+                    meta.title,
+                    meta.duration,
+                    meta.uploader,
+                    meta.thumbnailURL,
+                    isVideo,
+                    quality
+
+                    );
+                noticestored();
+            }
+        })
+
+    }
+
+    document.querySelector('.toggleoption').addEventListener('click', () => {
+        const options = document.querySelector('.options');
+        options.classList.toggle('show');
     });
+
+
+videoPlayer = document.getElementById('videoPlayer');
+audioPlayer = document.getElementById('audioPlayer');
+selected_cachevideo = document.getElementById('StoredVideo');
+audio_setting = document.getElementById('AudioOption');
+document.getElementById('droptable').addEventListener('click', async () => {
+    if (window.confirm("キャッシュに保存した動画をすべて削除します。よろしいですか？")) {
+        await deleteIndexedDB();
+        await deleteCache();
+        const results = document.getElementById('results');
+        results.innerHTML = "";
+    }
+});
 
 
 
     // キャッシュした動画を一覧表示
-    selected_cachevideo.addEventListener('change', async () => {
-        if (selected_cachevideo.checked) {
-            const data = await getIndexedDB();
-            if (audio_setting.checked) {
-                const filtered = data.filter(d => d.isVideo === "false");
-                displayVideos(filtered);
-                audio_lists = filtered;
-            } else {
-                const filtered = data.filter(d => d.isVideo === "true");
-                displayVideos(filtered);
-                video_lists = filtered;
-            }
-        }
-    });
-
-    audio_setting.addEventListener('change', () => {
-        const title = document.getElementById('quality_title');
-        const options = document.getElementById('qualitySelect');
-        const audio_settings = [
-            { val: '128', text: '128kbps' },
-            { val: '48', text: '48kbps' }
-        ]
-        const video_settings = [
-            { val: '144', text: '144p' },
-            { val: '240', text: '240p' },
-            { val: '360', text: '360p' },
-            { val: '480', text: '480p' },
-            { val: '720', text: '720p' },
-            { val: '1080', text: '1080p' },
-        ]
+selected_cachevideo.addEventListener('change', async () => {
+    if (selected_cachevideo.checked) {
+        const data = await getIndexedDB();
         if (audio_setting.checked) {
-            title.textContent = "音質設定";
-            options.innerHTML = audio_settings.map(d =>
-                `<option value="${d.val}">${d.text}</option>`
-            ).join('');
+            const filtered = data.filter(d => d.isVideo === "false");
+            displayVideos(filtered);
+            audio_lists = filtered;
         } else {
-            title.textContent = "画質設定";
-            options.innerHTML = video_settings.map(d =>
-                `<option value="${d.val}">${d.text}</option>`
-            ).join('');
+            const filtered = data.filter(d => d.isVideo === "true");
+            displayVideos(filtered);
+            video_lists = filtered;
         }
-    });
-
-    videoPlayer.addEventListener('ended', async () => {
-        if (audio_setting.checked) return;
-        const nextVideoId = await playNext();
-        if (nextVideoId) {
-            videoPlayer.src = `youtube/video/${nextVideoId}?cache=1`;
-            current = nextVideoId;
-            currentIndex = video_lists.findIndex(v => v.videoId === nextVideoId);
-        }
-        try {
-            await videoPlayer.play();
-            updateMediaSession(videoMetadata.get(current).title, videoMetadata.get(current).uploader, videoMetadata.get(current).thumbnailURL);
-        } catch (error) {
-            console.error("動画の再生に失敗しました:", error);
-        }
-    });
-
-    audioPlayer.addEventListener('ended', async () => {
-        if (!audio_setting.checked) return;
-        const nextVideoId = await playNext();
-        if (nextVideoId) {
-            audioPlayer.src = `youtube/video/${nextVideoId}?audio=1&cache=1`;
-            current = nextVideoId;
-            currentIndex = audio_lists.findIndex(v => v.videoId === nextVideoId);
-        }
-        try {
-            await audioPlayer.play();
-            updateMediaSession(videoMetadata.get(current).title, videoMetadata.get(current).uploader, videoMetadata.get(current).thumbnailURL);
-        } catch (error) {
-            console.error("音声の再生に失敗しました:", error);
-        }
-    });
-
-    if ('mediaSession' in navigator && videoPlayer) {
-        videoPlayer.addEventListener('play', () => {
-            navigator.mediaSession.playbackState = 'playing';
-        });
-        videoPlayer.addEventListener('pause', () => {
-            navigator.mediaSession.playbackState = 'paused';
-        });
     }
-    if ('mediaSession' in navigator && audioPlayer) {
-        audioPlayer.addEventListener('play', () => {
-            navigator.mediaSession.playbackState = 'playing';
-        });
-        audioPlayer.addEventListener('pause', () => {
-            navigator.mediaSession.playbackState = 'paused';
-        });
+});
+
+audio_setting.addEventListener('change', () => {
+    const title = document.getElementById('quality_title');
+    const options = document.getElementById('qualitySelect');
+    const audio_settings = [
+        { val: '128', text: '128kbps' },
+        { val: '48', text: '48kbps' }
+    ]
+    const video_settings = [
+        { val: '144', text: '144p' },
+        { val: '240', text: '240p' },
+        { val: '360', text: '360p' },
+        { val: '480', text: '480p' },
+        { val: '720', text: '720p' },
+        { val: '1080', text: '1080p' },
+    ]
+    if (audio_setting.checked) {
+        title.textContent = "音質設定";
+        options.innerHTML = audio_settings.map(d =>
+    `<option value="${d.val}">${d.text}</option>`
+    ).join('');
+    } else {
+        title.textContent = "画質設定";
+        options.innerHTML = video_settings.map(d =>
+    `<option value="${d.val}">${d.text}</option>`
+    ).join('');
     }
+});
+
+videoPlayer.addEventListener('ended', async () => {
+    if (audio_setting.checked) return;
+    const nextVideoId = await playNext();
+    if (nextVideoId) {
+        videoPlayer.src = `youtube/video/${nextVideoId}?cache=1`;
+        current = nextVideoId;
+        currentIndex = video_lists.findIndex(v => v.videoId === nextVideoId);
+    }
+    try {
+        await videoPlayer.play();
+        updateMediaSession(videoMetadata.get(current).title, videoMetadata.get(current).uploader, videoMetadata.get(current).thumbnailURL);
+    } catch (error) {
+        console.error("動画の再生に失敗しました:", error);
+    }
+});
+
+audioPlayer.addEventListener('ended', async () => {
+    if (!audio_setting.checked) return;
+    const nextVideoId = await playNext();
+    if (nextVideoId) {
+        audioPlayer.src = `youtube/video/${nextVideoId}?audio=1&cache=1`;
+        current = nextVideoId;
+        currentIndex = audio_lists.findIndex(v => v.videoId === nextVideoId);
+    }
+    try {
+        await audioPlayer.play();
+        updateMediaSession(videoMetadata.get(current).title, videoMetadata.get(current).uploader, videoMetadata.get(current).thumbnailURL);
+    } catch (error) {
+        console.error("音声の再生に失敗しました:", error);
+    }
+});
+
+if ('mediaSession' in navigator && videoPlayer) {
+    videoPlayer.addEventListener('play', () => {
+        navigator.mediaSession.playbackState = 'playing';
+    });
+    videoPlayer.addEventListener('pause', () => {
+        navigator.mediaSession.playbackState = 'paused';
+    });
+}
+if ('mediaSession' in navigator && audioPlayer) {
+    audioPlayer.addEventListener('play', () => {
+        navigator.mediaSession.playbackState = 'playing';
+    });
+    audioPlayer.addEventListener('pause', () => {
+        navigator.mediaSession.playbackState = 'paused';
+    });
+}
 console.log("ES6 end, app=", window.app);
