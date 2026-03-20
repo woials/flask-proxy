@@ -58,15 +58,20 @@ if (workbox) {
           }),
 
           {
+            //handlerDidComplete()
+            //strategyによって実行された非同期処理がすべて終了したら実行される
+            //ここでは動画をキャッシュする処理が終了したらこのメソッドが実行される
             //indexedDBに動画メタデータを保存する
             async handlerDidComplete({ request, response }) {
               if (!response || response.status !== 200) return; //responseがない or 200(ok)ではない➡return
 
               const url = new URL(request.url);
+              // キャッシュパラメータがある場合だけ通知
+              if (!url.searchParams.has('cache')) return;
+
               const videoId = url.pathname.split('/').pop();
               // /youtube/video/abc123 を　["", "youtube", "video", "abc123"]　に分割し、配列の１番後ろの要素を取得(pop)
 
-              // self=Service Worker
               // self.clients.matchAllは"Service Workerに紐づいているmatchAllの条件に合う
               // クライアント(制御下にあるタブやウィンドウ)をすべて列挙する" 
               const clientsList = await self.clients.matchAll({

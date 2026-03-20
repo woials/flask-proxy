@@ -114,7 +114,6 @@ video {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     min-height: 0;
-    height: 0;
 }
 
 .scroll-hidden::-webkit-scrollbar {
