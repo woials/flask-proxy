@@ -53,7 +53,7 @@ function createVideoItem(v) {
         );
     });
 
-    console.log(JSON.stringify(v));
+
     item.innerHTML =
         '<img src="' + v.thumbnailURL + '" alt="Thumbnail of ' + v.title + '">' +
         '<div class="video-details">' +
@@ -102,6 +102,9 @@ function fetchVideo(VideoId, title, description, uploader, thumbnailURL, duratio
                         play(VideoId, quality, title, uploader, thumbnailURL, description, duration);
                     }
                     return;
+                }else if(json && json.status === "error") {
+                    alert("ダウンロードに失敗しました");
+                    return;
                 } else {
                     timer = setTimeout(checkStatus, 1000); // 1秒後に再度チェック
                 }
@@ -149,7 +152,7 @@ function play(VideoId, quality, title, uploader, thumbnailURL, description, dura
     }
     target.oncanplay = null;
     target.addEventListener('canplay', onCanPlay);
-    target.onerror = function (e) { console.log('再生エラー:', e) };
+    target.onerror = function (e) { console.error('再生エラー:', e) };
     loadRelatedVideos(VideoId);
 
 }

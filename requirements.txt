@@ -14,3 +14,4 @@ gevent
 python-dotenv
 google-genai
 pydantic
+sqlalchemy

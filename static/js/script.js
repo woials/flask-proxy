@@ -15,9 +15,8 @@ window.app = {
     search,
     fetchVideo
 };
-console.log(document.getElementById('qualitySelect').value);
-console.log(document.getElementById('StoredVideo'));
 
+//IndexedDBを開く関数
 export async function open_db() {
     let db;
     db = await openDB("youtube-DB", 4, {
@@ -134,6 +133,7 @@ export function updateMediaSession(title, uploader, thumbnailURL) {
         navigator.mediaSession.playbackState = 'playing';
     }
 }
+/*--------------------------------------------------------------------------------------------------------------- */
 
 export async function search() {
     const query = document.getElementById('searchBox').value;
@@ -170,7 +170,8 @@ export async function fetchVideo(VideoId, title, description, uploader, thumbnai
         },
         body: JSON.stringify({
             "quality": quality,
-            "title":title
+            "title":title,
+            "duration":duration
         })
     })
     if (!startRes.ok) return;
@@ -181,6 +182,10 @@ export async function fetchVideo(VideoId, title, description, uploader, thumbnai
                 const json = await res.json();
                 if (json.ready) {
                     play(VideoId, quality, title, uploader, thumbnailURL, description, duration);
+                    return;
+                }
+                if(json.status==="error"){
+                    alert("ダウンロードに失敗しました");
                     return;
                 }
             } catch { }

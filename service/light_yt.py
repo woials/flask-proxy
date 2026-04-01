@@ -1,7 +1,13 @@
 from flask import  request
 import subprocess
 import json
+import os
+import glob #正規表現に合うファイルを見つける
+from pathlib import Path
 
+current_dir=Path(__file__).parent #このファイルの親ディレクトリ(service)
+video_dir=current_dir.parent/"static"/"videos" #同一階層にあるstaticの中にあるvideosディレクトリ
+SAVE_DIR = "static/videos"
 
 #動画を検索する関数
 def search_videos(query,max_result=20):
@@ -72,3 +78,26 @@ def get_related_videos(video_id,max_results=10):
     except Exception as e:
         print(f"Error fetching related videos: {e}")
         return []
+    
+def search_stored_videos():
+    video_files=list(video_dir.glob("*.mp4"))
+    return video_files
+
+
+def get_quality_label(width):
+    if width >= 3840:
+        return "2160p"
+    elif width >= 2560:
+        return "1440p"
+    elif width >= 1920:
+        return "1080p"
+    elif width >= 1280:
+        return "720p"
+    elif width >= 854:
+        return "480p"
+    elif width >= 640:
+        return "360p"
+    elif width >= 426:
+        return "240p"
+    else:
+        return "144p"
