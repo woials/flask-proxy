@@ -1,7 +1,7 @@
 from collections import defaultdict
 import json
 
-from sqlalchemy import Index, create_engine, DateTime, select, Column, String, Integer
+from sqlalchemy import Index, create_engine, DateTime, delete, func, select, Column, String, Integer
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.sqlite import insert
@@ -60,13 +60,32 @@ session.execute(select(Video))だけだと、[(Video1), (Video2), ...]という1
 .scalars()を使うと、[Video1, Video2, ...]というVideoオブジェクトのリストが返ってくる
 """
 
+def count_stored(isVideo: bool):
+    with SessionLocal() as session:
+        stmt=select(func.count()).select_from(Video).where(
+            Video.type==("video" if isVideo else "audio")
+        )
+        counts=session.scalar(stmt)
+        return counts
+
+def is_exist_videoId(videoId: str):
+    with SessionLocal() as session:
+        stmt=select(func.count()).select_from(Video).where(
+            Video.video_id==videoId
+        )
+        counts=session.scalar(stmt)
+        if counts>0:
+            return True
+        else:
+            return False
 
 def get_videos_by_type(isVideo: bool):
     # sessionmakerで設定した引数でSessionを作成する
     with SessionLocal() as session:
         # 1.select()関数を使ってクエリを生成する
         stmt = select(Video).where(
-            Video.type == ("video" if isVideo else "audio"))
+            Video.type == ("video" if isVideo else "audio")
+            ).order_by(Video.video_id,Video.quality.desc())
         # 2.session.scalars()を用いてクエリを実行し、結果を取得する
         rows = session.scalars(stmt).all()
         # defaultdictは、キーが存在しない場合に自動的に初期値を生成する辞書のサブクラス
@@ -75,8 +94,25 @@ def get_videos_by_type(isVideo: bool):
         # 3.動画IDごとに動画をグループ化する
         # 動画IDと解像度の組み合わせで重複しないようにしているので、動画IDごとにグループ化すれば、同一の動画で解像度違いのものをまとめて表示できる
         for v in rows:
-            grouped[v.video_id].append(v)
+            grouped[v.video_id].append({
+                "quality": f"{v.quality}p" if v.type=="video" else f"{v.quality}kbps",
+                "title": v.title,
+                "duration": v.duration,
+                "file_path": v.file_path,
+                "thumbnail_path": v.thumbnail_path,
+                "added_at": v.added_at.isoformat()
+            })
         return grouped
+
+def delete_stored_by_videoId(videoId: str, isVideo: bool):
+    with SessionLocal() as session:
+        stmt=delete(Video).where(
+            Video.video_id==videoId,
+            Video.type==("video" if isVideo else "audio")
+        )
+        session.execute(stmt)
+        session.commit()
+        
 
 
 r"""
@@ -85,6 +121,25 @@ stmtはステートメント(statement)の略で、一般的にDB操作を扱う
 PHPでも$stmtはステートメントを表す変数名としてよく使われる
 SQL文をそのまま文字列で書くと、SQLインジェクションのリスクがあるので、命令の枠組み(Statement)を
 作ってから値をバインドする方法が推奨される(prepared statement)
+"""
+
+r"""
+TIPS:DetachedInstance
+　SQLAlchemyのORMオブジェクトはSessionに紐づいているときにだけ完全に機能する。
+しかし、Sessionが閉じられたり、オブジェクトがSessionから切り離されたりすると、そのオブジェクトはDetachedInstanceと呼ばれる状態になる。
+つまり、
+・DBとの接続が切れている
+・lazy load(遅延ロード：関連オブジェクトをアクセスしたときにDBからデータを取得する機能)が機能しない
+・更新してもDBに反映されない
+などの制限がある。
+with SessionLocal()を抜けたり、session.close()を呼ぶとSessionが閉じられるので、以降はDetachedInstanceになることに注意する必要がある。
+すでにロードされた属性にはアクセスできるが、関連オブジェクトなどはアクセスできないため、必要なデータはSessionが有効なうちにすべてロードしておく必要がある。
+　特に問題となるのが、外部キーで関連付けられた(relationshipで定義された)オブジェクトにアクセスする場合で、
+Sessionが閉じられた後にアクセスしようとするとDetachedInstanceErrorが発生する。
+➡select文を実行したとき、外部キーがそのテーブル内に存在することは分かっているが、外部キーの中身は分からない。
+(より正確に言うと、外部キーのID値のみが分かっている状態)
+外部キーの中身にアクセスする場合、外部キーが格納されているテーブルからデータを取得する必要がある。
+with SessionLocal()を抜けるとSessionが閉じられてDBへの接続が切れるため、外部キーの中身にアクセスしようとするとDetachedInstanceErrorが発生する。
 """
 
 

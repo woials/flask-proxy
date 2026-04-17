@@ -40,7 +40,9 @@ def radio_page():
 @app.route("/gemini")
 def gemini_page():
     return render_template('gemini.html')
-
+@app.route("/server_cache")
+def server_cache_page():
+    return render_template('server_cache.html')
 
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/server_cache.css') }}">
+    
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div class="header-controls">
+        <div>
+            <a href="/" class="home"><img src="{{url_for('static',filename='home.png')}}" alt=""></a>
+        </div>
+
+        <div class="top">
+            <button id="settings">🛠️</button>
+            <div class="options" id="settings-menu">
+                <select id="quality-priority">
+                    <option value="high">高品質モード</option>
+                    <option value="low">データ節約モード</option>
+                </select>
+                <button id="delete">削除する</button>
+            </div>
+
+
+
+        </div>
+    </div>
+
+    <p id="delete-text"></p>
+    <p id="count"></p>
+    <div class="main-content">
+
+        <div class="video-player hidden" id="playerSection">
+            <video id="videoPlayer" controls playsinline></video>
+            <audio id="audioPlayer" controls></audio>
+            <div class="video-info">
+                <h2 id="videoTitle"></h2>
+                <small id="videoUploader"></small>
+                <p id="videoDescription"></p>
+            </div>
+        </div>
+        <div class="sidebar scroll-hidden">
+            <div class="results" id="results">
+
+            </div>
+        </div>
+    </div>
+    <nav class="bottom-nav">
+        <div class="nav-item" id="video-type">
+            <span class="icon">🎞️</span>
+            <span class="label">動画</span>
+        </div>
+        <div class="nav-item" id="audio-type">
+            <span class="icon">🎵</span>
+            <span class="label">音声</span>
+        </div>
+    </nav>
+
+</body>
+<script src="{{ url_for('static', filename='js/server_cache.js') }}"></script>
+
+</html>

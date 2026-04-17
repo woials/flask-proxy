@@ -122,8 +122,6 @@ if (workbox) {
   }
 
 
-
-  // todo:ES5対応のjsが動くかテスト
   workbox.routing.registerRoute(
     ({url})=>
       url.pathname==='/static/js/script.js',
@@ -170,6 +168,20 @@ if (workbox) {
     })
   )
   workbox.routing.registerRoute(
+    ({url})=>
+      url.pathname === '/static/gemini.png',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'gemini-icon'
+    })
+  )
+  workbox.routing.registerRoute(
+    ({url}) =>
+      url.pathname === '/static/server_cache.png',
+    new workbox.strategies.CacheFirst({
+      cacheName:'server_cache-icon'
+    })
+  )
+  workbox.routing.registerRoute(
     ({ url }) =>
       url.pathname === '/static/css/home.css',
     new workbox.strategies.CacheFirst({
@@ -189,8 +201,9 @@ if (workbox) {
 
   workbox.routing.registerRoute(
     ({ url }) => url.pathname.startsWith('/weather/api'),
-    new workbox.strategies.StaleWhileRevalidate({
+    new workbox.strategies.NetworkFirst({
       cacheName: 'weather-api',
+      networkTimeoutSeconds:3,
     })
   );
 

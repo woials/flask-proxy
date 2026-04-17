@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, send_from_directory, abort, json, Response
 # 動画検索と関連動画取得のサービスをインポート
 from service.light_yt import search_videos, get_related_videos, search_stored_videos,get_quality_label
-from service.DBmodel import SessionLocal, Video, insert, select, store_videos
+from service.DBmodel import SessionLocal, Video, get_videos_by_type, insert, select, store_videos,count_stored,delete_stored_by_videoId,is_exist_videoId
 from collections import defaultdict
 import os
 import yt_dlp
@@ -75,16 +75,19 @@ def stream_video(video_id):
                 # 選択されたフォーマットの実際の高さを取得
                 if 'requested_formats' in info:
                     # 映像と音声が分離している場合
-                    actual_height = info['requested_formats'][0].get(
+                    actual_width = info['requested_formats'][0].get(
                         'width', quality)
+                    actual_height = info['requested_formats'][0].get('height',quality)
                 else:
                     # 単一フォーマットの場合
-                    actual_height = info.get('width', quality)
+                    actual_width = info.get('width', quality)
+                    actual_height = info.get('height', quality)
             except Exception as e:
                 return jsonify({"error": f"情報取得失敗: {str(e)}"}), 500
             # 画質ごとにファイル名を分ける
             # シネマスコープ対応のため、幅で判断する
-            label=get_quality_label(actual_height)
+            label=get_quality_label(actual_width, actual_height)
+            quality=label.replace("p","")
             file_name = f"{video_id}_{label}.mp4"
             file_path = os.path.join(SAVE_DIR, file_name)
         else:
@@ -289,9 +292,100 @@ def video_status(video_id):
         "ready": state["status"] == "ready"
     })
 
+
+r"""DB関連処理群"""
+
 # サーバに保存してある動画・音声の一覧を返す
-
-
 @youtube.route('/server/videos')
 def return_stored_videos():
-    stored = search_stored_videos()  # 動画ファイルのリストを取得
+    stored_videos = get_videos_by_type(isVideo=True)  # 動画ファイルのリストを取得
+    stored_audios = get_videos_by_type(isVideo=False)  # 音声ファイルのリストを取得
+    stored={
+        "videos":stored_videos,
+        "audios":stored_audios
+    }
+    json_str=json.dumps(stored,ensure_ascii=False,indent=4)
+    return Response(json_str, mimetype='application/json; charset=utf-8')
+
+@youtube.route('/server/delete', methods=['POST'])
+def delete_stored_videos():
+    data = request.get_json()
+    videoId=data.get("videoId")
+    isVideo=data.get('isVideo')
+    delete_stored_by_videoId(videoId,isVideo)
+
+    # 実ファイルを削除
+    files=os.listdir(SAVE_DIR)
+    try:
+        for file in files:
+            file_path=os.path.join(SAVE_DIR,file)
+            if isVideo:
+                if file.startswith(videoId) and file.endswith(".mp4"):
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+            else:
+                if file.startswith(videoId) and file.endswith(".m4a"):
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+
+        if not is_exist_videoId(videoId):
+            thumbnail_path=os.path.join(SAVE_DIR,f"{videoId}_thumbnail.jpg")
+            if os.path.exists(thumbnail_path):
+                os.remove(thumbnail_path)
+    except Exception as e:
+        print(f"error:{e}")
+                
+    result={
+        "deleted":"ok"
+    }
+    json_str=json.dumps(result,ensure_ascii=True,indent=4)
+    return Response(json_str,mimetype='application/json; charset=utf-8')
+
+
+
+@youtube.route('/server/count')
+def return_stored_counts():
+    video_count = count_stored(isVideo=True)
+    audio_count = count_stored(isVideo=False)
+    return jsonify({
+        "video_count": video_count,
+        "audio_count": audio_count
+    })
+
+@youtube.route('/server/thumbnail/<video_id>')
+def return_thumbnail(video_id):
+    thumbnail_path = os.path.join(SAVE_DIR, f"{video_id}_thumbnail.jpg")
+    if os.path.exists(thumbnail_path):
+        return send_from_directory(SAVE_DIR, f"{video_id}_thumbnail.jpg", mimetype='image/jpeg')
+    abort(404)
+
+@youtube.route('/server/thumbnail/redownload',methods=['POST'])
+def redownload_thumbnail():
+    data = request.get_json()
+    ID = data.get("videoId")
+    thumbnail_url = f"https://i.ytimg.com/vi/{ID}/default.jpg"
+    thumbnail_path = os.path.join(
+    SAVE_DIR, f"{ID}_thumbnail.jpg")
+    try:
+        response = requests.get(thumbnail_url)
+        with open(thumbnail_path, "wb") as f:
+            f.write(response.content)
+        return jsonify({"download":"ok"})
+    except Exception as e:
+        print(f"サムネイルのダウンロードエラー{e}")
+        return jsonify({"download":"error"})
+
+
+@youtube.route('/server/stream/<video_id>')
+def stream_stored(video_id):
+    quality=request.args.get("quality")
+    print(f"ストリーミングリクエスト: video_id={video_id}, quality={quality}")
+    files=os.listdir(SAVE_DIR)
+    for file in files:
+        if file.startswith(video_id) and (quality in file): # video_idとqualityの両方を満たすファイルを探す。これで動画と音声の区別もつく
+            return send_from_directory(SAVE_DIR, file, conditional=True)
+    for file in files: # 万が一qualityのパラメータがない場合はvideo_idだけで探す
+        if file.startswith(video_id):
+            return send_from_directory(SAVE_DIR, file, conditional=True)
+    abort(404)
+

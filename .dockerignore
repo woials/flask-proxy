@@ -1,0 +1,9 @@
+.git
+__pycache__
+*.mp4
+static/video/
+*.mp3
+node_modules
+myenv/
+.vscode/
+tmp.ytdl

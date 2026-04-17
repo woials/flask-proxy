@@ -24,12 +24,12 @@
         </a>
     </div>
 
-    <div class="container">
+    <!-- <div class="container">
         <a href="/radio/web/radio" class="link-wrapper">
             <img src="{{url_for('static',filename='radio.png')}}" alt="">
             <p class="title">ラジオニュース</p>
         </a>
-    </div>
+    </div> -->
 
     <div class="container">
         <a href="/gemini" class="link-wrapper">
@@ -37,6 +37,15 @@
             <p class="title">Gemini</p>
         </a>
     </div>
+
+    <div class="container">
+        <a href="/server_cache" class="link-wrapper">
+            <img src="{{url_for('static',filename='server_cache.png')}}" alt="">
+            <p class="title">保存している動画・音声を表示</p>
+        </a>
+
+    </div>
+
     <button id="delete-sw">Service Worker削除</button>
 </body>
 <script>
@@ -53,17 +62,22 @@
     }
     var del = document.getElementById('delete-sw');
     del.addEventListener('click', function () {
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-            regs.forEach(function (reg) {
-                reg.unregister();
+        if (window.confirm("Service Workerを削除しますか？")) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+                regs.forEach(function (reg) {
+                    reg.unregister();
+                });
             });
-        });
 
-        caches.keys().then(function (names) {
-            names.forEach(function (name) {
-                caches.delete(name);
+            caches.keys().then(function (names) {
+                names.forEach(function (name) {
+                    caches.delete(name);
+                });
             });
-        });
+            window.alert("Service Workerを削除しました");
+            location.reload();
+        }
+
     })
 </script>
 

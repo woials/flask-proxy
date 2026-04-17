@@ -1,0 +1,112 @@
+
+.video-item{
+    display: grid;
+    grid-template-columns: 1fr 7fr 1fr 1fr; /*サムネイル:タイトル:再生時間:解像度=1:7:1:1*/
+    gap: 10px;
+    align-items: center;
+    border: 1px solid #ddd;
+    justify-content: space-between;
+}
+.video-title{
+    grid-column: 1;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 10vh;
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-around; /* アイコンを均等に配置 */
+  align-items: center;
+
+  border: 1px solid #aaa;
+  z-index: 1000; /* 他の要素より上に表示 */
+}
+
+.nav-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  color: #606060;
+}
+
+/*クリックしたりタップした時に色を変える*/
+.nav-item:active { 
+  background-color: #f0f0f0;
+}
+
+.icon {
+  font-size: 20px;
+}
+
+.label {
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.main-content{
+    height: 80vh;
+    padding-bottom: 10vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.top{
+    position: relative;
+    height: 10vh;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 10px;
+
+}
+button#settings{
+    background-color: #eee;
+    padding: 10px;
+    margin-left: auto;
+}
+
+
+.options{
+    position: absolute;
+    display: flex;
+    top: 100%;
+    z-index: 1001;
+    flex-direction: column;
+}
+
+/*動画プレイヤーが隠れていない場合*/
+.video-player:not(.hidden){
+    display: block;
+    flex-shrink: 0;
+    padding-bottom: 20px;
+    
+}
+#videoDescription{
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+/* 小さい画面（800px以下）：動画＋リストを一体でスクロール */
+@media (max-width: 800px) {
+    .main-content {
+        height: auto;
+        overflow-y: visible;
+        padding-bottom: 10vh; /* ボトムナビ分の余白 */
+    }
+ 
+    .sidebar {
+        overflow-y: visible;
+        max-height: none;
+        height: auto;
+    }
+}
+.main-content::-webkit-scrollbar{
+    display: none;
+}

@@ -84,20 +84,26 @@ def search_stored_videos():
     return video_files
 
 
-def get_quality_label(width):
-    if width >= 3840:
+def get_quality_label(width, height):
+    """幅と高さのうち、大きい方（長辺）を基準にラベルを判定する"""
+    if not width or not height:
+        return "unknown"
+        
+    side = max(width, height)
+    
+    if side >= 3840:
         return "2160p"
-    elif width >= 2560:
+    elif side >= 2560:
         return "1440p"
-    elif width >= 1920:
+    elif side >= 1920:
         return "1080p"
-    elif width >= 1280:
+    elif side >= 1280:
         return "720p"
-    elif width >= 854:
+    elif side >= 854:
         return "480p"
-    elif width >= 640:
+    elif side >= 640:
         return "360p"
-    elif width >= 426:
+    elif side >= 426:
         return "240p"
     else:
         return "144p"

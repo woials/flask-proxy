@@ -5,7 +5,7 @@ function ask() {
     var searchBox = document.getElementById('searchBox')
     var query = document.getElementById('searchBox').value;
     if (!query) return;
-    var option=document.getElementById('mode-select').value;
+    var option = document.getElementById('mode-select').value;
     searchBox.value = "";
     searchBox.style.height = 'auto';
     isSent = true;
@@ -13,12 +13,16 @@ function ask() {
     var url = "/gemini/ask";
 
     if (isSent) {
-        xhrPostJSON(url, { query: query ,option: option}, function (error, data) {
+        document.getElementById('title').textContent = "";
+        document.getElementById('summary').textContent = "";
+        document.getElementById('main').textContent = "";
+        xhrPostJSON(url, { query: query, option: option }, function (error, data) {
             isSent = false;
             if (error) {
                 console.log(error);
                 return;
             } else {
+
                 createHTML(data);
             }
         })
@@ -41,19 +45,19 @@ tx.addEventListener('keydown', function (e) {
     }
 })
 
-function drawBorder_forQuestion(query){
-    var question=document.getElementById('question');
-    question.textContent=query;
-    question.style.display='inline-block'
-    question.style.maxWidth='calc(100% - 20px)'
-    question.style.textAlign='left'
-    question.style.padding='8px'
-    question.style.boxSizing='border-box'
-    question.style.border='1px solid #ddd';
-    question.style.borderRadius='4px';
-    question.style.backgroundColor='#007aff'
-    question.style.color='white';
-    question.style.border='none';
+function drawBorder_forQuestion(query) {
+    var question = document.getElementById('question');
+    question.textContent = query;
+    question.style.display = 'inline-block'
+    question.style.maxWidth = 'calc(100% - 20px)'
+    question.style.textAlign = 'left'
+    question.style.padding = '8px'
+    question.style.boxSizing = 'border-box'
+    question.style.border = '1px solid #ddd';
+    question.style.borderRadius = '4px';
+    question.style.backgroundColor = '#007aff'
+    question.style.color = 'white';
+    question.style.border = 'none';
 }
 
 function createHTML(data) {
@@ -76,15 +80,15 @@ function createHTML(data) {
     }
 }
 
-var modal=document.getElementById('setting-modal');
-function openModal(){
-    modal.style.display='block';
+var modal = document.getElementById('setting-modal');
+function openModal() {
+    modal.style.display = 'block';
 }
-function closeModal(){
-    modal.style.display='none';
+function closeModal() {
+    modal.style.display = 'none';
 }
-window.onclick=function(event){
-    if(event.target==modal){
+window.onclick = function (event) {
+    if (event.target == modal) {
         closeModal();
     }
 }
@@ -141,5 +145,5 @@ function xhrPostJSON(url, body, callback) {
 
 window.app = {
     ask: ask,
-    openModal:openModal
+    openModal: openModal
 }
