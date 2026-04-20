@@ -222,22 +222,8 @@ def stream_video(video_id):
             except Exception as e:
                 print(f"サムネイルのダウンロードエラー{e}")
 
-            # 管理用のJSONファイルを作成
-            # todo:必要なデータ:video_id,タイトル,動画の長さ,サムネイルURL,サムネイルの保存先パス,解像度(動画の解像度/音声ビットレート)
-            # 解像度は動画と音声で違うから、動画の解像度はquality、音声の解像度はbitrateで管理する
-            # todo:動画と音声の解像度の分岐処理
-            # todo:JSONでの保存はスケールしないので、sqliteに移行することも検討する
-
-            json_path = os.path.join(SAVE_DIR, "videos.json")
-            # JSONファイルを読み込む。存在しない場合は新規作成する
-            if os.path.exists(json_path):
-                try:
-                    with open(json_path, "r", encoding='utf-8') as f:
-                        video_list = json.load(f)
-                except Exception as e:
-                    video_list = []
-            else:
-                video_list = []
+            
+            video_list = []
             # 今回保存する動画のメタデータを作成
             metadata = {
                 "video_id": video_id,
@@ -246,7 +232,7 @@ def stream_video(video_id):
                 "thumbnail_path": thumbnail_path,
                 "file_path": file_path,
                 "type": "video" if is_video_mode else "audio",
-                "quality": f"{actual_height}p" if is_video_mode else f"{quality}kbps",
+                "quality": f"{quality}p" if is_video_mode else f"{quality}kbps",
                 "added_at": datetime.datetime.now().isoformat()
             }
             # 重複チェック

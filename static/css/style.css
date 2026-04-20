@@ -113,7 +113,8 @@ video {
     overscroll-behavior: contain;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    min-height: 0;
+    height: 80vh;
+    
 }
 
 .scroll-hidden::-webkit-scrollbar {
@@ -183,7 +184,7 @@ video {
     .sidebar {
         overflow: visible;
         max-width: 100%;
-        max-height:none;
+        height: auto;
         min-height: unset;
     }
 }
