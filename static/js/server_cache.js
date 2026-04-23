@@ -70,7 +70,6 @@ deleteBtn.addEventListener('click', function () {
 
 });
 
-// server_cache.js
 document.addEventListener('DOMContentLoaded', () => {
     var settingsBtn = document.getElementById('settings');
     var settingsMenu = document.getElementById('settings-menu');

@@ -3,6 +3,7 @@ from blueprint.youtube import youtube
 from blueprint.weather import weather
 # from blueprint.radio import radio
 from blueprint.gemini import gemini
+from blueprint.news import news
 import os
 
 app = Flask(__name__)
@@ -10,6 +11,7 @@ app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
 # app.register_blueprint(radio,url_prefix='/radio')
 app.register_blueprint(gemini,url_prefix='/gemini')
+app.register_blueprint(news,url_prefix='/news')
 basedir=os.path.dirname(os.path.abspath(__file__))
 
 @app.after_request
@@ -43,6 +45,9 @@ def gemini_page():
 @app.route("/server_cache")
 def server_cache_page():
     return render_template('server_cache.html')
+@app.route("/news")
+def news_page():
+    return render_template('news.html')
 
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="{{url_for('static',filename='manifest.json')}}">
     <link rel="stylesheet" href="{{url_for('static',filename='css/home.css')}}">
-    <title>Document</title>
+    <title>Flask製Webアプリ</title>
 </head>
 
 <body>
@@ -30,6 +30,12 @@
             <p class="title">ラジオニュース</p>
         </a>
     </div> -->
+    <div class="container">
+        <a href="/news" class="link-wrapper">
+            <img src="{{url_for('static',filename='news.png')}}" alt="">
+            <p class="title">ニュース</p>
+        </a>
+    </div>
 
     <div class="container">
         <a href="/gemini" class="link-wrapper">
