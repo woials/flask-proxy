@@ -154,9 +154,25 @@ function createNewsTitles(sourceName) {
     }
 }
 
+// function store_db(){
+//     var request=indexedDB.open("news_db",1);
+//     //オブジェクトストアがない場合は作成する
+//     request.onupgradeneeded=function(event){
+//         var db=event.target.result;
+//         if(!db.objectStoreNames.contains("articles")){
+//             db.createObjectStore("articles",{keyPath:"link"});
+//         }
+//     };
+//     //データの保存
+//     request.onsuccess=function(event){
+//         var db=event.target.result;
+        
+//     };
+// }
+
 /* 返って来るjsonの構造
     {
-    放送局名:[
+    ソース名:[
         {
             リンク,
             日時,
@@ -166,11 +182,24 @@ function createNewsTitles(sourceName) {
     }
 */
 
+/*
+indexedDBに保存するデータの構造 
 
+DB名:news_db
+オブジェクトストア名:articles (autoIncrementはfalseで、keyPathはlink)
 
-
-
-
+保存するデータの構造
+{
+    link: "記事のリンク",
+    pub_date: "公開日時",
+    added_date: "保存日時",
+    last_checked_date: "最後にチェックした日時",
+    title: "記事のタイトル",
+    article: "記事の内容",
+    etag: "記事のETag"
+    is_read: "記事を読んだかどうかのフラグ"
+} 
+*/
 
 
 

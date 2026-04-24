@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, send_from_directory, abort, json, Response
 # 動画検索と関連動画取得のサービスをインポート
 from service.light_yt import search_videos, get_related_videos, search_stored_videos,get_quality_label
-from service.DBmodel import SessionLocal, Video, get_videos_by_type, insert, select, store_videos,count_stored,delete_stored_by_videoId,is_exist_videoId
+from service.YoutubeDB import SessionLocal, Video, get_videos_by_type, insert, select, store_videos,count_stored,delete_stored_by_videoId,is_exist_videoId
 from collections import defaultdict
 import os
 import yt_dlp

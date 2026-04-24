@@ -9,8 +9,8 @@
 
 /* アイコンのサイズ調整 */
 .icon {
-    width: 40px;           /* お好みのサイズに */
-    height: 40px;
+    width: 48px;           /* お好みのサイズに */
+    height: 48px;
     margin-right: 15px;    /* アイコンと文字の間の隙間 */
 }
 
@@ -25,4 +25,22 @@
 .container:hover {
     background-color: #f9f9f9;
     cursor: pointer;
+}
+.container{
+    border-bottom:1px solid #ccc;
+}
+.container>a>img{
+    padding:10px;
+}
+#delete-sw{
+    margin-top:10px;
+    padding:10px;
+    background-color:orange;
+    color:white;
+    border:none;
+    border-radius:5px;
+}
+#delete-sw:hover{
+    background-color:orangered;
+    cursor:pointer;
 }

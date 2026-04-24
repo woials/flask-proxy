@@ -24,6 +24,7 @@ if [ ! -f .funnel_initialized ]; then
     touch .funnel_initialized
 fi
 . ./venv/bin/activate
+pip install -r requirements.txt
 exec ./venv/bin/gunicorn -k gevent -w 2 \
     --timeout 300 \
     --keep-alive 10 \

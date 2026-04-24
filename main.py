@@ -4,9 +4,11 @@ from blueprint.weather import weather
 # from blueprint.radio import radio
 from blueprint.gemini import gemini
 from blueprint.news import news
+from flask_compress import Compress
 import os
 
 app = Flask(__name__)
+Compress(app)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather,url_prefix='/weather')
 # app.register_blueprint(radio,url_prefix='/radio')
@@ -14,11 +16,6 @@ app.register_blueprint(gemini,url_prefix='/gemini')
 app.register_blueprint(news,url_prefix='/news')
 basedir=os.path.dirname(os.path.abspath(__file__))
 
-@app.after_request
-def add_header(response):
-    # ngrokの警告ページをスキップするためのヘッダー
-    response.headers['ngrok-skip-browser-warning'] = 'true'
-    return response
 @app.route('/')
 def index():
     return render_template('index.html')

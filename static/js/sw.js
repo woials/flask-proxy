@@ -147,6 +147,13 @@ if (workbox) {
     })
   )
   workbox.routing.registerRoute(
+    ({url}) =>
+      url.pathname === '/static/css/home.css',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'home-css'
+    })
+  )
+  workbox.routing.registerRoute(
     ({ url }) =>
       url.pathname === '/static/weather.png',
     new workbox.strategies.CacheFirst({
@@ -160,11 +167,18 @@ if (workbox) {
       cacheName: 'youtube-icon'
     })
   )
+  // workbox.routing.registerRoute(
+  //   ({ url }) =>
+  //     url.pathname === '/static/radio.png',
+  //   new workbox.strategies.CacheFirst({
+  //     cacheName: 'radio-icon'
+  //   })
+  // )
   workbox.routing.registerRoute(
     ({ url }) =>
-      url.pathname === '/static/radio.png',
+      url.pathname === '/static/news.png',
     new workbox.strategies.CacheFirst({
-      cacheName: 'radio-icon'
+      cacheName: 'news-icon'
     })
   )
   workbox.routing.registerRoute(
@@ -226,4 +240,37 @@ if (workbox) {
       cacheName: 'Home-icon'
     })
   )
+  /*ニュースアプリをキャッシュに登録 */
+  workbox.routing.registerRoute(
+    ({ request, url }) =>
+      request.mode === 'navigate' &&
+      url.pathname.startsWith('/news'),
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'news-html',
+    })
+  );
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname === '/static/js/news.js',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'news-js',
+    })
+  );
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname === '/static/css/news.css',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'news-css',
+    })
+  );
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname === '/static/fonts/DotGothic16-Regular.woff2',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'news-font',
+    })
+  );
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname === '/static/fonts/DotGothic16-Regular.woff',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'news-font',
+    })
+  );
 }
