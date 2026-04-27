@@ -39,6 +39,7 @@ def update_RSS_cache():
         cached_entries.update(get_RSS_feed(i,url))
         time.sleep(1) #リクエスト間隔を空ける
         
+        
 for i, url in enumerate(RSS_URL):
     cached_entries.update(get_RSS_feed(i,url))
 scheduler=BackgroundScheduler()
