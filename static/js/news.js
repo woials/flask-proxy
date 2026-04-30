@@ -2,8 +2,8 @@
 // グローバル変数群
 var cached_entries = {};
 var client_width = document.documentElement.clientWidth;
-var isPC= client_width >= 800; //PCかどうかを判定するフラグ
-var active_element_menu = null; 
+var isPC = client_width >= 800; //PCかどうかを判定するフラグ
+var active_element_menu = null;
 var active_element_entry = null;
 
 // イベントリスナー群
@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 window.addEventListener('hashchange', function () {
     var raw_hash = decodeURIComponent(window.location.hash); //例: #FBSが取得できる
-    
+
     var parts = raw_hash.split('/'); //例: #FBS/0のようにスラッシュで分割して配列にする。parts[0]は#FBS、parts[1]は0になる。
     var part = parts[0];
     var sourceName = part.substring(1); //例: #FBS/0の#を取り除いてFBSだけを取得
@@ -27,7 +27,7 @@ window.addEventListener('hashchange', function () {
 
         var index = parseInt(parts[1]);
         if (cached_entries[sourceName] && cached_entries[sourceName][index]) {
-            getArticle(cached_entries[sourceName][index].link);
+            getArticle(cached_entries[sourceName][index].link, cached_entries[sourceName][index].article);
         }
     } else {//例: #FBSのようにスラッシュがない場合
         createNewsTitles(sourceName);
@@ -36,8 +36,8 @@ window.addEventListener('hashchange', function () {
 });
 
 window.addEventListener('resize', function () {
-    client_width= document.documentElement.clientWidth;
-    isPC= client_width >= 800;
+    client_width = document.documentElement.clientWidth;
+    isPC = client_width >= 800;
 });
 
 // 関数群
@@ -59,39 +59,60 @@ function getRSSFeed() {
 }
 
 //記事の内容を取得して表示する関数
-function getArticle(link) {
+function getArticle(link, article) {
     var url = "/news/api/article?q=" + encodeURIComponent(link);
     var news = document.getElementById("news-list");
-    
+
     var articleSection = document.getElementById("article");
-    if (!isPC) {
-        news.innerHTML = "Loading...";
-        articleSection.innerHTML = "";
-    }
-    xhrGetJSON(url, function (err, data) {
-        if (err) {
-            console.error("Error fetching article:", err);
-            news.innerHTML = "Failed to load article.";
-            return;
-        } else {
-            // innerHTMLで本文を構築した後に、setTimeoutでブラウザの描画を待った後で
-            // window.scrollToで画面上部までスクロールする
-            var paragraph = data.article.split("\n\n"); // \n\nで分解して段落ごとにする
-            articleSection.innerHTML = paragraph.map(function (p) {
-                var lines=p.split("\n");
-                return "<p class='dotgothic16-regular'>" + lines.join("<br>") + "</p>"; //段落ごとに<p>タグで囲む
-            }).join("");//段落を結合して表示
-            if (!isPC) {
-            news.innerHTML = "";
-            }
-            setTimeout(function(){
-                window.scrollTo({
-                    top:0,
-                    behavior:"instant"
-                });
-            },0);
+    if (article === undefined) {
+        if (!isPC) {
+            news.innerHTML = "Loading...";
+            articleSection.innerHTML = "";
         }
-    });
+        xhrGetJSON(url, function (err, data) {
+            if (err) {
+                console.error("Error fetching article:", err);
+                news.innerHTML = "Failed to load article.";
+                return;
+            } else {
+                // innerHTMLで本文を構築した後に、setTimeoutでブラウザの描画を待った後で
+                // window.scrollToで画面上部までスクロールする
+                var paragraph = data.article.split("\n\n"); // \n\nで分解して段落ごとにする
+                articleSection.innerHTML = paragraph.map(function (p) {
+                    var lines = p.split("\n");
+                    return "<p class='dotgothic16-regular'>" + lines.join("<br>") + "</p>"; //段落ごとに<p>タグで囲む
+                }).join("");//段落を結合して表示
+                if (!isPC) {
+                    news.innerHTML = "";
+                }
+                setTimeout(function () {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "instant"
+                    });
+                }, 0);
+            }
+        });
+    } else { //もうすでに本文データを取得している場合
+        if (!isPC) {
+            news.innerHTML = "Loading...";
+            articleSection.innerHTML = "";
+        }
+        var paragraph = article.split("\n\n"); // \n\nで分解して段落ごとにする
+        articleSection.innerHTML = paragraph.map(function (p) {
+            var lines = p.split("\n");
+            return "<p class='dotgothic16-regular'>" + lines.join("<br>") + "</p>"; //段落ごとに<p>タグで囲む
+        }).join("");//段落を結合して表示
+        if (!isPC) {
+            news.innerHTML = "";
+        }
+        setTimeout(function () {
+            window.scrollTo({
+                top: 0,
+                behavior: "instant"
+            });
+        }, 0);
+    }
 }
 
 //ニュースのソースを表示する関数
@@ -105,14 +126,14 @@ function createNewsSources(sourceNames) {
         a.textContent = sourceNames[i];
         a.href = "#" + sourceNames[i];
         div.style.cursor = "pointer";
-        div.addEventListener("click",function(e){
+        div.addEventListener("click", function (e) {
             e.preventDefault();
-            window.location.hash=this.querySelector("a").textContent; //例: #FBS
-            if(active_element_menu){
+            window.location.hash = this.querySelector("a").textContent; //例: #FBS
+            if (active_element_menu) {
                 active_element_menu.classList.remove("active");
             }
             this.classList.add("active");
-            active_element_menu=this;
+            active_element_menu = this;
         })
         div.appendChild(a);
         news.appendChild(div);
@@ -139,13 +160,13 @@ function createNewsTitles(sourceName) {
                 li.appendChild(a);
                 news.appendChild(li);
                 li.addEventListener("click", function (e) {
-                    if(active_element_entry){
+                    if (active_element_entry) {
                         active_element_entry.classList.remove("active");
                     }
                     this.classList.add("active");
-                    active_element_entry=this;
+                    active_element_entry = this;
                     e.preventDefault();
-                    window.location.hash=sourceName + "/" + index; //例: #FBS/0
+                    window.location.hash = sourceName + "/" + index; //例: #FBS/0
                 });
             })(i);
         }
@@ -154,6 +175,35 @@ function createNewsTitles(sourceName) {
     }
 }
 
+// server sent eventで送られてきた本文データを受信する関数
+function streamArticle() {
+    var eventSrc = new EventSource('/news/api/article/stream')
+
+    eventSrc.onmessage = function (event) {
+        var data = JSON.parse(event.data);
+        if (data.status === "completed") {
+            console.log("送信完了!")
+            eventSrc.close();
+            return;
+        }
+        if (data.status === "sent" && data.source && cached_entries[data.source]) {
+            for (var i = 0; i < cached_entries[data.source].length; i++) {
+                if (cached_entries[data.source][i].link === data.link) {
+                    cached_entries[data.source][i].article = data.article;
+                    break;
+                }
+            }
+        }
+
+    };
+
+    eventSrc.onerror = function () {
+        console.error("エラー発生!")
+        eventSrc.close();
+    }
+}
+
+streamArticle();
 // function store_db(){
 //     var request=indexedDB.open("news_db",1);
 //     //オブジェクトストアがない場合は作成する
@@ -166,7 +216,7 @@ function createNewsTitles(sourceName) {
 //     //データの保存
 //     request.onsuccess=function(event){
 //         var db=event.target.result;
-        
+
 //     };
 // }
 

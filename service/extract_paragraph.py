@@ -4,6 +4,7 @@ from datetime import datetime
 import feedparser
 from zoneinfo import ZoneInfo
 
+
 BASE_URL = "https://news.yahoo.co.jp"
 RSS_URL=[
     "https://news.yahoo.co.jp/rss/media/tncv/all.xml",
@@ -60,8 +61,10 @@ def get_next_url(soup):
 def get_full_article(url):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     all_text = []
-
+    page_count = 0
     while url:
+        if page_count > 10:
+            break
         res = requests.get(url, headers=headers)
         res.encoding=res.apparent_encoding #日本語の文字化け対策
         soup = BeautifulSoup(res.text, "html.parser")
@@ -72,8 +75,9 @@ def get_full_article(url):
 
         all_text.append(text)
         url = get_next_url(soup)  # 次ページURLを取得、なければNoneでループ終了
-
+        page_count += 1
     return "\n\n".join(all_text)
+
 
 if __name__ == "__main__":
     url="https://news.yahoo.co.jp/articles/2c500eef3cd9f6cc426ac4b58255993aac7451a6"

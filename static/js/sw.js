@@ -256,6 +256,7 @@ if (workbox) {
         cacheName: 'news_top-api',
       })
   );
+  
   workbox.routing.registerRoute(
     ({ url }) => url.pathname === '/static/js/news.js',
     new workbox.strategies.StaleWhileRevalidate({
