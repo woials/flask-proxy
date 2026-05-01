@@ -249,18 +249,24 @@ if (workbox) {
       cacheName: 'news-html',
     })
   );
-  workbox.routing.registerRoute(
-    ({ url})=>
-      url.pathname === '/news/api/top',
-      new workbox.strategies.StaleWhileRevalidate({
-        cacheName: 'news_top-api',
-      })
-  );
+  // workbox.routing.registerRoute(
+  //   ({ url})=>
+  //     url.pathname === '/news/api/top',
+  //     new workbox.strategies.StaleWhileRevalidate({
+  //       cacheName: 'news_top-api',
+  //     })
+  // );
   
   workbox.routing.registerRoute(
     ({ url }) => url.pathname === '/static/js/news.js',
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'news-js',
+    })
+  );
+  workbox.routing.registerRoute(
+    ({url}) => url.pathname === '/static/js/dexie_min.js',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName:'dexie_min.js'
     })
   );
   workbox.routing.registerRoute(

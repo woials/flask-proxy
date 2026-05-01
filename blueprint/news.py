@@ -46,12 +46,16 @@ def stream_articles():
                     if "article" in entry and entry["article"]: 
                         link=entry.get("link")
                         article_text=entry.get("article")
+                        title=entry.get("title")
+                        pub_date=entry.get("pub_date")
                         #すでに送信している場合はスルー
                         if link in sent_links:
                             continue
                         if article_text:
                             data=json.dumps({
                                 "source":source,
+                                "title":title,
+                                "pub_date":pub_date,
                                 "link":link,
                                 "article":article_text,
                                 "status":"sent"
@@ -65,7 +69,7 @@ def stream_articles():
             # 全ての記事データを送信出来たらループを抜ける
             if all_articles_ready:
                 break
-            time.sleep(1) # 1秒待機
+
         data=json.dumps({"status":"completed"})
         yield f"data: {data}\n\n"
     return Response(
@@ -76,7 +80,8 @@ def stream_articles():
             "X-Accel-Buffering":"no"
         }
     )
-                    
+
+
 
 # 定期的にRSSを更新するためのスケジューラー
 # サーバ起動時に1回実行し、以降は１５分ごとに更新する

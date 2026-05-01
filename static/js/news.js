@@ -5,12 +5,66 @@ var client_width = document.documentElement.clientWidth;
 var isPC = client_width >= 800; //PCかどうかを判定するフラグ
 var active_element_menu = null;
 var active_element_entry = null;
+var isOnline = false;
+var db = new Dexie("newsDB");
+
+/*DB保存群 */
+
+// articlesテーブルを定義、先頭にあるものが主キーになるので
+// linkが主キー、それ以外はインデックスになるのでsourceにインデックスが付く
+db.version(2).stores({
+    articles: "link,source"
+})
+
+function saveArticle(link, title, source, content, pub_date) {
+    db.articles.put({ //無ければ新規作成、既にあれば上書き
+        link: link,
+        title:title,
+        source: source,
+        article: content,
+        pub_date:pub_date,
+        updatedAt: Date.now()
+    }).then(function () {
+        console.log("保存成功：", link);
+    }).catch(function (error) {
+        console.error("保存エラー：", error);
+    });
+}
+
+function loadNewsFromDB() {
+    db.articles
+        .orderBy("source") //ソースをアルファベット順に並べる
+        .toArray() //配列にする
+        .then(function (items) {
+            if (items.length === 0) {
+                window.alert("現在オフラインです。保存された記事はありません。");
+                return;
+            }
+            var offlineData = {};
+            // 取得したデータをsourceごとにグループ化
+            // cached_entriesと同じ形式にする
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (!offlineData[item.source]) {
+                    offlineData[item.source] = []
+                }
+                offlineData[item.source].push(item);
+            }
+            cached_entries = offlineData;
+            var news = document.getElementById("news");
+            var sourceNames = Object.keys(offlineData);
+            news.innerHTML = "";
+            createNewsSources(sourceNames);
+
+        })
+}
 
 // イベントリスナー群
 window.addEventListener('DOMContentLoaded', function () {
     if (window.location.hash) {
         history.replaceState("", document.title, window.location.pathname);
     }
+
     getRSSFeed();
 });
 window.addEventListener('hashchange', function () {
@@ -41,18 +95,23 @@ window.addEventListener('resize', function () {
 });
 
 // 関数群
+
 function getRSSFeed() {
-    var url = "news/api/top"
+    var url = "/news/api/top";
     xhrGetJSON(url, function (err, data) {
         if (err) {
             console.error('Error fetching RSS feed:', err);
+            isOnline = false;
+            loadNewsFromDB();
             return;
         } else {
+            isOnline = true;
             cached_entries = data;
             var news = document.getElementById("news");
             var sourceNames = Object.keys(data);
             news.innerHTML = "";
             createNewsSources(sourceNames);
+            streamArticle();
         }
 
     });
@@ -182,7 +241,7 @@ function streamArticle() {
     eventSrc.onmessage = function (event) {
         var data = JSON.parse(event.data);
         if (data.status === "completed") {
-            console.log("送信完了!")
+            console.log("受信完了!")
             eventSrc.close();
             return;
         }
@@ -190,7 +249,8 @@ function streamArticle() {
             for (var i = 0; i < cached_entries[data.source].length; i++) {
                 if (cached_entries[data.source][i].link === data.link) {
                     cached_entries[data.source][i].article = data.article;
-                    break;
+                    saveArticle(data.link, data.title,data.source, data.article, data.pub_date);
+
                 }
             }
         }
@@ -203,7 +263,7 @@ function streamArticle() {
     }
 }
 
-streamArticle();
+
 // function store_db(){
 //     var request=indexedDB.open("news_db",1);
 //     //オブジェクトストアがない場合は作成する
