@@ -141,7 +141,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({ request, url }) =>
       request.mode === 'navigate' &&
-      url.pathname === '/',
+      url.pathname === '/home',
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'Home-html'
     })
@@ -202,7 +202,13 @@ if (workbox) {
       cacheName: 'home-css'
     })
   )
-
+  workbox.routing.registerRoute(
+    ({url}) =>
+      url.pathname === '/static/logout.png',
+    new workbox.strategies.CacheFirst({
+      cacheName:'logout-icon'
+    })
+  )
   /*天気アプリをキャッシュに登録 */
   workbox.routing.registerRoute(
     ({ request, url }) =>

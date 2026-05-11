@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="{{css_url}}">
+    <link rel="manifest" href="{{url_for('static',filename='manifest.json')}}">
+    <link rel="icon" href="{{url_for('static',filename='favicon.svg')}}" type="image/svg+xml">
+    <link rel="icon" href="{{url_for('static',filename='favicon.ico')}}" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{url_for('static',filename='apple-touch-icon.png')}}">
+    <title>Flask製Webアプリへようこそ！</title>
+</head>
+
+<body>
+    <form action="/login" method="post" class="login_box">
+        <div id="id">
+            <p>ユーザID</p>
+            <input type="text" name="username" autocomplete="username">
+        </div>
+        <div id="password">
+            <p>パスワード</p>
+            <input type="password" name="password" autocomplete="current-password">
+        </div>
+        <div class="auto_login">
+            <div id="config">
+                <p>ログイン状態を保存する</p>
+                <input type="checkbox" name="remember">
+            </div>
+            <div>
+                <button type="submit">送信する</button>
+            </div>
+
+        </div>
+
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <p class="flash">{{message}}</p>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </form>
+</body>
+
+</html>

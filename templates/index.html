@@ -13,6 +13,10 @@
 </head>
 
 <body>
+    <form action="/logout" id="logout-form">
+        <button id="logout"></button>
+        <p id="logout-text">ログアウト</p>
+    </form>
     <div class="container">
         <a href="/youtube" class="link-wrapper">
             <img src="{{url_for('static',filename='youtube.png')}}" alt="">
@@ -55,10 +59,8 @@
     </div>
 
     <button id="delete-sw">Service Worker削除</button>
-    <form action="/logout">
-        <button id="logout">ログアウト</button>
-    </form>
-    
+
+
 </body>
 <script>
     if ('serviceWorker' in navigator) {
