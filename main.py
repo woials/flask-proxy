@@ -14,19 +14,22 @@ import os
 app = Flask(__name__)
 Compress(app)
 app.register_blueprint(youtube, url_prefix='/youtube')
-app.register_blueprint(weather,url_prefix='/weather')
+app.register_blueprint(weather)
 # app.register_blueprint(radio,url_prefix='/radio')
 app.register_blueprint(gemini,url_prefix='/gemini')
 app.register_blueprint(news,url_prefix='/news')
 basedir=os.path.dirname(os.path.abspath(__file__))
+
 load_dotenv()
 SECRET_KEY=os.getenv("SECRET_KEY")
 USER=os.getenv("USER")
 PASSWORD=os.getenv("PASSWORD")
+FLASK_ENV=os.getenv("FLASK_ENV")
 app.config['SECRET_KEY']=SECRET_KEY
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SECURE=True,   # HTTPS限定
+    #production(HTTPS)であればTrueにしてセキュアな接続の時のみクッキーを送信。FalseならHTTPで接続されるのでクッキーは送信されない
+    SESSION_COOKIE_SECURE=FLASK_ENV=="production",  
     SESSION_COOKIE_SAMESITE='Lax'
 )
 
@@ -80,6 +83,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/')
 @app.route('/home')
 def index():
     return render_template('index.html')
@@ -99,7 +103,8 @@ def youtube_page():
 
 @app.route('/weather')
 def weather_page():
-    return redirect('/weather/web/weather')
+    from blueprint.weather import draw_weather
+    return draw_weather()
 
 @app.route('/radio')
 def radio_page():
