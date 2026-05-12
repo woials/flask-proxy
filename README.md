@@ -6,7 +6,7 @@
 - 🧪 Flask (Web Framework)
 - 📜 JavaScript (ES5 / ES6)
 - ⚙️ Service Worker
-- 🗃️ IndexedDB (idb)
+- 🗃️ IndexedDB (idb,dexie.js)
 - 🤖 Gemini API
 
 ## 設計のこだわり
@@ -35,7 +35,7 @@ NTT東日本によると、能登半島地震での通信断絶について次�
 - 🏝️ オフラインでも保存しているデータを確認できること
 ### アーキテクチャ図
 ブラウザは外部サービスと直接通信せず、すべてFlaskプロキシサーバーを経由します。
-これにより、クライアントの差異をプロキシで吸収し、
+外部サービスごとの差異やレスポンス形式、レート制限などをサーバ側で吸収し、クライアントを単純化する構成を採用しています。
 ```mermaid
 graph TD
 Browser --> FlaskProxy
@@ -66,7 +66,7 @@ FlaskProxy --> Yahooニュース
 3. 🧑‍🏫AI質問アプリ<br>
 - クライアントから送信された質問をサーバーが受信し、Gemini APIへ送信します。
 - APIから返された回答はサーバー側で整形し、クライアントへ表示します。
-- Pydanticを使用し、AIの出力を「タイトル・要約・説明」の構造化JSONに変換してからクライアントへ送信しています。
+- Pydanticを使用し、AIの出力を「タイトル・要約・説明」に構造化・検証し、その後クライアントへ送信しているので、Gemini APIの出力の揺らぎによるUI崩れや実行時エラー、悪意のあるスクリプトの実行を防止しています。
 - クライアント側では、Gemini APIの思考レベルや使用するモデルを変更できます。
 - メモリが限られる環境でも動作できるよう、会話履歴を保持しない一問一答方式を採用しています。
 4. 📰ニュースアプリ<br>
@@ -136,9 +136,58 @@ function xhrGetJSON(url, callback) {
 初回の読み込みは時間がかかるものの、キャッシュ後は実用的な時間で表示することができました。
 
 ### 3. オフラインで使用できるようにデータを適切にキャッシュすること<br>
-特に動画・音声データのクライアント側での保存・管理方法についての知識が無かったため実装方法が不明でした。
-### 4. ios12の制約
-script type="module"を認識しないことや、後述するService Workerの対応が不完全でありキャッシュ周りの挙動が不安定であることが課題でした。
-   
+#### 課題
+ネットワークが利用できない環境でもニュースや天気などのデータを閲覧できるよう、クライアント側でデータの保存・更新・読み込みを管理する必要がありました。
+#### 解決方法
+- workbox(Service Workerを簡単に扱えるようにするためのライブラリ)を使い、静的データ(HTML/CSSなど)はCacheFirst、動的データ(APIレスポンスなど)はStaleWhileRevalidateで保存することで、
+  データの保存と更新を自動で行えるようにしました。
+- dexie.js(IndexedDBを簡単に扱えるようにするためのライブラリ)を利用してIndexedDBを操作し、ニュース・天気・動画・音声などのデータをクライアント側に保存しました。
+- オフライン時はIndexedDBにあるデータを優先的に読み込むことで、通信ができない状況でもコンテンツを閲覧できるようにしました。
+#### 結果
+アプリ利用時にデータが自動でキャッシュされ、オフライン環境でも保存済みコンテンツを閲覧できるようになりました。
+また、静的アセットをキャッシュから配信することで、ページ表示速度の向上にもつながりました。
 
+### 4. レガシーデバイスの制約(特にiOS12)
+#### 課題
+iOS 12 では ES Modules をサポートしておらず、Service Worker の実装も不完全です。
+特にキャッシュ容量が最大約50MB程度に制限されるため、動画や音声を含む大容量データの保存が現実的ではありません。
+そのため、
+- レガシーデバイスでは最低限の機能でアプリを利用できること
+- 新しいデバイスではService Workerによるキャッシュ機能やオフライン機能を利用できること
+の両立が必要でした。
+#### 解決方法
+- トップページにあたるindex.htmlでService Workerが使えるか判定し、利用可能であればService Workerの登録を行うようにしました。
+- YouTubeアプリにおいて、Service Worker対応のscript.jsとService Worker非対応のlegacy_script.jsを分離して実装しました。
+- HTML側でJavaScriptを動的ロードし、BigInt・WebAssembly・async()=>{}のサポートの有無を利用して、実行環境に応じたスクリプトを選択する構成にしました。
+- 他のアプリについてはJavaScriptではES5までの構文で実装し、古いブラウザでも動作するようにしました。
+##### JavaScript動的ロードのコード
+```html
+    <script>
+        var isModern = false;
+        try {
 
+            if (typeof BigInt !== "undefined" && typeof WebAssembly !== "undefined") {
+                // さらに async 構文のチェック
+                new Function('async () => {}');
+                isModern = true;
+            }
+        } catch (e) {
+            isModern = false;
+        }
+
+        var s = document.createElement('script');
+        if (isModern) {
+            s.type = 'module';
+            s.src = '/static/js/script.js';
+
+        } else {
+            s.src = '/static/js/legacy_script.js';
+            // iOS 12以前はここに来る
+
+        }
+        document.head.appendChild(s);
+    </script>
+``` 
+#### 結果
+実行環境に応じて読み込むJavaScriptを切り替えることで、ES Modules非対応のレガシーデバイスでもアプリを利用できるようになりました。
+また、新しいデバイスではService Workerを利用したオフライン対応やキャッシュ機能を有効化し、Progressive Enhancementを実現しました。
