@@ -73,33 +73,33 @@ def get_weather():
     advice=""
     #雨予報なのに降っていない
     if "雨" in today_forecast or "雪" in today_forecast:
-        if precip10m==0:
+        if precip10m is not None and precip10m==0:
             advice+="今は雨が止んでいます\n"
-            if precip1h==0:
+            if precip1h is not None and precip1h==0:
                 advice+="1時間ほど雨は降っていないようです\n"
-        else:
+        elif precip10m is not None and precip10m>0:
             advice=f"予報通り雨が降っています(直近10分:{precip10m}mm)\n"
     else: #雨予報でないのに降っている
-        if precip10m>0:
+        if precip10m is not None and precip10m>0:
             advice+=f"予報外の雨が降っています！(直近10分:{precip10m}mm)\n"
         
     #曇り予報なのに日差しがある
     if any(word in today_forecast for word in ["曇り","曇","くもり"]):  #"曇り","曇","くもり"のいずれかがあればtrue
-        if sun10m>0.8:
+        if sun10m is not None and sun10m>0.8:
             advice+="日差しが差してきました\n"
-            if sun1h>0.8:
+            if sun1h is not None and sun1h>0.8:
                 advice+="予報より晴れているようです\n"
         # else:
         #     advice+="予報通り曇っています\n"
     elif any(word in today_forecast for word in ["晴れ","晴"]):
-        if sun10m<0.3:
+        if sun10m is not None and sun10m<0.3:
             advice+="予報より曇っているようです\n"
     #風の強さ
-    if wind >10:
+    if wind is not None and wind >10:
         advice+="強風に注意！\n"
-    elif wind>5:
+    elif wind is not None and wind>5:
         advice+="風が吹いています\n"
-    else:
+    elif wind is not None:
         advice+="風は穏やかです\n"
     
     #不快指数と体感温度

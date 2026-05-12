@@ -21,6 +21,8 @@ app.register_blueprint(news,url_prefix='/news')
 basedir=os.path.dirname(os.path.abspath(__file__))
 load_dotenv()
 SECRET_KEY=os.getenv("SECRET_KEY")
+USER=os.getenv("USER")
+PASSWORD=os.getenv("PASSWORD")
 app.config['SECRET_KEY']=SECRET_KEY
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
@@ -32,7 +34,7 @@ app.config.update(
 login_manager=LoginManager()
 login_manager.init_app(app)
 login_manager.login_view="login" #ログインしていない時のリダイレクト先
-users={"aki":{"password":generate_password_hash("Mamesiba11")}}
+users={USER:{"password":generate_password_hash(PASSWORD)}}
 app.config['REMEMBER_COOKIE_DURATION']=timedelta(days=365)
 
 class User(UserMixin): #UserMixinを使うと、ログイン確認・アカウント有効判定・ゲストユーザー判定・ユーザに対応する一意のID割り振りを自動で行う

@@ -18,3 +18,4 @@ sqlalchemy
 beautifulsoup4
 apscheduler
 flask-compress
+flask-login

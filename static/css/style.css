@@ -49,7 +49,6 @@ body {
 #searchBox {
     flex: 1;
     padding: 2px;
-    font-size: 10px;
     border: 1px solid var(--border-color);
     background: var(--surface-color);
     color: var(--text-color);
