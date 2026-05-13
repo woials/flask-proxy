@@ -26,10 +26,17 @@ USER=os.getenv("USER")
 PASSWORD=os.getenv("PASSWORD")
 FLASK_ENV=os.getenv("FLASK_ENV")
 app.config['SECRET_KEY']=SECRET_KEY
+
+# Tailscale Funnel 対応: X-Forwarded-* ヘッダーを信頼する
+from werkzeug.middleware.proxy_fix import ProxyFix
+# x_for=1: X-Forwarded-For の最後の 1 個を信頼
+# x_proto=1, x_host=1, x_port=1: 各ヘッダーの最後の値を信頼
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
+# セッションクッキー設定: Tailscale Funnel (HTTPS) 対応
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    #production(HTTPS)であればTrueにしてセキュアな接続の時のみクッキーを送信。FalseならHTTPで接続されるのでクッキーは送信されない
-    SESSION_COOKIE_SECURE=FLASK_ENV=="production",  
+    SESSION_COOKIE_SECURE=True,  
     SESSION_COOKIE_SAMESITE='Lax'
 )
 
@@ -124,3 +131,56 @@ def news_page():
 
 if __name__=="__main__":
     app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+
+r"""
+TIPS:ProxyFix
+リバースプロキシ(NginxやApache、tailscale funnelなど)経由でアプリを動かすときに、リクエストのメタデータを
+補正するためのもの
+◇引数の意味
+・x_for: X-Forwarded-For
+プロキシサーバ経由でアクセスしたクライアントのIPアドレス
+これがないとプロキシサーバのIPアドレスと誤認される
+x_for=1は末尾から１つ目のIPを信頼するということで
+[server]←[proxy]←[client]という構成の場合に指定する
+もう１段プロキシがある場合はx_for=2にする
+不用意にx_forの値を大きくすると悪意のあるクライアントが送信したX-Forwarded-Forを信頼してしまう
+
+・x_proto: X-Forwarded-Proto
+プロキシサーバへアクセスするのに使ったクライアントのプロトコル(HTTPまたはHTTPS)
+
+・x_host: X-Forwarded-Host
+プロキシサーバへ経由でアクセスしたクライアントのホスト名
+
+・x_prefix: X-Forwarded-Prefix
+URLパスのプレフィックスをバックエンドのアプリ(Flask)に伝える
+これがない場合...
+プロキシが/myapp以下をflaskに転送する構成があったする。
+example.com/myapp/loginにアクセス
+➡これをプロキシが/myappを削ってflaskに転送すると、Flaskには/loginとして届く
+このとき、FlaskがリダイレクトURLを生成すると
+example.com/loginとなり、/myappが抜けてしまう
+▶X-Forwarded-Prefix: /myapp があれば削られた部分がFlaskに伝わるので
+example.com/myapp/login と正しいURLが生成される
+
+◇ProxyFixを使わなかったときに起きた問題
+1. ブラウザがxxx.ts.net(tailscale funnelで生成したURL)にアクセス
+2. Flaskがクライアントがログインしていないと判断
+3. どこかへリダイレクト(302)
+4. リダイレクト先で404
+
+〇ProxyFixなしのとき
+Flaskは自身がlocalhost:5000で動いていると思っている
+login_manager.login_view = "login"によるリダイレクト先は
+localhost:5000/loginになる
+すると...
+1. xxx.ts.netへアクセス
+2. ログインしていないのでlocalhost:5000/loginへリダイレクト
+➡tailscale funnelは外部(xxx.ts.net)から内部(localhost)へ一方通行なので、
+tailscaleを経由せずにlocalhost:5000/login(クライアント自身のlocalhost)へ直接アクセスするため404になる
+
+〇ProxyFixありのとき
+1. xxx.ts.netにアクセス
+2. ログインしていないのでリダイレクト
+➡X-Forwarded-Host: xxx.ts.netを読むことで、Flaskは自身がxxx.ts.netで動いていると認識するので
+リダイレクト先がxxx.ts.net/loginになり正しくログイン画面に遷移する
+"""
