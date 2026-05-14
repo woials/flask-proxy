@@ -5,7 +5,7 @@ async function store_db(){
     
     let data=null;
     let db 
-    db=await openDB("weather-DB",1,{
+    db=await openDB("weather-DB",2,{
             upgrade(db){ //テーブルを作成
                 if(!db.objectStoreNames.contains("forecast")){
                     db.createObjectStore("forecast");

@@ -14,7 +14,7 @@ import os
 app = Flask(__name__)
 Compress(app)
 app.register_blueprint(youtube, url_prefix='/youtube')
-app.register_blueprint(weather)
+app.register_blueprint(weather, url_prefix='/weather')
 # app.register_blueprint(radio,url_prefix='/radio')
 app.register_blueprint(gemini,url_prefix='/gemini')
 app.register_blueprint(news,url_prefix='/news')
@@ -110,8 +110,7 @@ def youtube_page():
 
 @app.route('/weather')
 def weather_page():
-    from blueprint.weather import draw_weather
-    return draw_weather()
+    return redirect('/weather/web/weather')
 
 @app.route('/radio')
 def radio_page():

@@ -123,17 +123,17 @@ if (workbox) {
 
 
   workbox.routing.registerRoute(
-    ({url})=>
-      url.pathname==='/static/js/script.js',
+    ({ url }) =>
+      url.pathname === '/static/js/script.js',
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName:'youtube-js'
+      cacheName: 'youtube-js'
     })
   )
   workbox.routing.registerRoute(
-    ({url})=>
-      url.pathname==='/static/css/style.css',
+    ({ url }) =>
+      url.pathname === '/static/css/style.css',
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName:'youtube-css'
+      cacheName: 'youtube-css'
     })
   )
 
@@ -147,7 +147,7 @@ if (workbox) {
     })
   )
   workbox.routing.registerRoute(
-    ({url}) =>
+    ({ url }) =>
       url.pathname === '/static/css/home.css',
     new workbox.strategies.StaleWhileRevalidate({
       cacheName: 'home-css'
@@ -182,17 +182,17 @@ if (workbox) {
     })
   )
   workbox.routing.registerRoute(
-    ({url})=>
+    ({ url }) =>
       url.pathname === '/static/gemini.png',
     new workbox.strategies.CacheFirst({
       cacheName: 'gemini-icon'
     })
   )
   workbox.routing.registerRoute(
-    ({url}) =>
+    ({ url }) =>
       url.pathname === '/static/server_cache.png',
     new workbox.strategies.CacheFirst({
-      cacheName:'server_cache-icon'
+      cacheName: 'server_cache-icon'
     })
   )
   workbox.routing.registerRoute(
@@ -203,10 +203,10 @@ if (workbox) {
     })
   )
   workbox.routing.registerRoute(
-    ({url}) =>
+    ({ url }) =>
       url.pathname === '/static/logout.png',
     new workbox.strategies.CacheFirst({
-      cacheName:'logout-icon'
+      cacheName: 'logout-icon'
     })
   )
   /*天気アプリをキャッシュに登録 */
@@ -223,7 +223,12 @@ if (workbox) {
     ({ url }) => url.pathname.startsWith('/weather/api'),
     new workbox.strategies.NetworkFirst({
       cacheName: 'weather-api',
-      networkTimeoutSeconds:3,
+      networkTimeoutSeconds: 3,
+      plugins: [
+        new workbox.cacheableResponse.CacheableResponsePlugin({
+          statuses: [200],
+        }),
+      ],
     })
   );
 
@@ -262,7 +267,7 @@ if (workbox) {
   //       cacheName: 'news_top-api',
   //     })
   // );
-  
+
   workbox.routing.registerRoute(
     ({ url }) => url.pathname === '/static/js/news.js',
     new workbox.strategies.StaleWhileRevalidate({
@@ -270,9 +275,9 @@ if (workbox) {
     })
   );
   workbox.routing.registerRoute(
-    ({url}) => url.pathname === '/static/js/dexie_min.js',
+    ({ url }) => url.pathname === '/static/js/dexie_min.js',
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName:'dexie_min.js'
+      cacheName: 'dexie_min.js'
     })
   );
   workbox.routing.registerRoute(

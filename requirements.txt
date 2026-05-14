@@ -1,10 +1,4 @@
-Cython>=0.29.21
 feedparser==6.0.12
-filelock==3.20.3
-h2==4.3.0
-HTMLParser==0.0.2
-importlib_metadata==8.0.0
-thread==2.0.6
 yt_dlp
 flask==2.3.2
 ffmpeg-python
