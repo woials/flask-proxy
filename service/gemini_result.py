@@ -32,10 +32,10 @@ def get_gemini_result(query,option):
     match option:
         case 'minimal':
             mode=types.ThinkingConfig(thinking_level="minimal")
-            model="gemini-3.1-flash-lite-preview"
+            model="gemini-3.1-flash-lite"
         case 'high':
             mode=types.ThinkingConfig(thinking_level="high")
-            model="gemini-3.1-flash-lite-preview"
+            model="gemini-3.1-flash-lite"
         case 'light':
             mode=types.ThinkingConfig(thinking_level="high")
             model="gemini-3-flash-preview"
