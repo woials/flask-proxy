@@ -17,6 +17,7 @@
 - Docker / Docker Compose
 - Git
 - Gemini API キー（[Google AI Studio](https://aistudio.google.com/)で取得）
+- 自宅などで試す場合はYouTubeのログイン情報が入ったCookieがほぼ必須です(未検証)。Cookie取得時は**メインではない**Googleアカウントを使用することを強く推奨します
 
 ### 手順
 
@@ -41,6 +42,14 @@ docker-compose up
 ```
 
 4. ブラウザで `http://localhost:5000` にアクセスします
+
+5. (YouTubeアプリが動作しない場合)Cookieを取得します。  
+**メインではない**GoogleアカウントでYouTubeにログインします。
+Cookieの取得方法はさまざまありますが、拡張機能を使うのが１番手軽です。
+[yt-dlpのFAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ)では、
+Chrome系ブラウザの場合は[Get cookies.txt LOCALLY](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
+FireFox系ブラウザの場合は[cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/)が紹介されています。
+取得したCookieはプロジェクトルートに配置してください。
 
 ## 設計のこだわり
 ### 制作の目的
