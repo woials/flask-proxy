@@ -260,13 +260,13 @@ if (workbox) {
       cacheName: 'news-html',
     })
   );
-  // workbox.routing.registerRoute(
-  //   ({ url})=>
-  //     url.pathname === '/news/api/top',
-  //     new workbox.strategies.StaleWhileRevalidate({
-  //       cacheName: 'news_top-api',
-  //     })
-  // );
+  workbox.routing.registerRoute(
+    ({ url})=>
+      url.pathname === '/news/api/top',
+      new workbox.strategies.StaleWhileRevalidate({
+        cacheName: 'news_top-api',
+      })
+  );
 
   workbox.routing.registerRoute(
     ({ url }) => url.pathname === '/static/js/news.js',
@@ -298,4 +298,28 @@ if (workbox) {
       cacheName: 'news-font',
     })
   );
+  workbox.routing.registerRoute(
+    ({url})=>url.pathname==='/static/icon-512.png',
+    new workbox.strategies.CacheFirst({
+      cacheName:'icon-512.png'
+    })
+  )
+  workbox.routing.registerRoute(
+    ({url})=>url.pathname==='/static/favicon.svg',
+    new workbox.strategies.CacheFirst({
+      cacheName:'favicon.svg'
+    })
+  )
+  workbox.routing.registerRoute(
+    ({url})=>url.pathname==='/static/apple-touch-icon.png',
+    new workbox.strategies.CacheFirst({
+      cacheName:'apple-touch-icon.png'
+    })
+  )
+  workbox.routing.registerRoute(
+    ({url})=>url.pathname==='/static/favicon.ico',
+    new workbox.strategies.CacheFirst({
+      cacheName:'favicon.ico'
+    })
+  )
 }
