@@ -1,6 +1,7 @@
 from datetime import timedelta
 from dotenv import load_dotenv
-from flask import Flask, flash,render_template,redirect, request, session,url_for,send_from_directory
+from flask import Blueprint, Flask, flash,render_template,redirect, request, session,url_for,send_from_directory
+from blueprint.proxy_invidious import proxy
 from blueprint.youtube import youtube
 from blueprint.weather import weather
 # from blueprint.radio import radio
@@ -12,6 +13,7 @@ from werkzeug.security import generate_password_hash,check_password_hash
 import os
 
 app = Flask(__name__)
+app.config['SERVER_NAME']="school-pc.tailebd8e7.ts.net"
 Compress(app)
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather, url_prefix='/weather')
@@ -60,7 +62,7 @@ def load_user(user_id):
 # *** ルーティング ***
 @app.before_request
 def login_require_for_all_pages():
-    allowed_endpoints=['login','static']
+    allowed_endpoints=['login','static','inv.invidious_page']
     session.permanent=True
     app.config['PERMANENT_SESSION_LIFETIME']=timedelta(days=365)
     # 今のユーザがログインしていない　＆　loginページ以外にアクセスしようとしている　➡ログインページへリダイレクト
@@ -90,7 +92,6 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/')
 @app.route('/home')
 def index():
     return render_template('index.html')
@@ -128,8 +129,15 @@ def server_cache_page():
 def news_page():
     return render_template('news.html')
 
+invidious=Blueprint("inv",__name__)
+@invidious.route("/", defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE'])
+@invidious.route("/<path:path>", methods=['GET', 'POST', 'PUT', 'DELETE'])
+def invidious_page(path):
+    return proxy(path)
+app.register_blueprint(invidious)
+
 if __name__=="__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False,threaded=True)
 
 r"""
 TIPS:ProxyFix
