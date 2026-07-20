@@ -22,7 +22,7 @@ def proxy(path):
         )
     except requests.exceptions.RequestException as e:
         return f"Proxy Error:{e}, 502"
-    excluded_headers=["content-encoding","transfer-encoding","connection"]
+    excluded_headers=["content-encoding","transfer-encoding","connection","content-length"]
     response_headers = [
         (name, value) for (name, value) in resp.raw.headers.items()
         if name.lower() not in excluded_headers

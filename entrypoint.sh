@@ -17,15 +17,14 @@ if [ ! -f .funnel_initialized ]; then
     # 各サービスをtailscaleの内部ルーティングに登録
     tailscale serve https:443 / http://localhost:5000
     tailscale serve https:443 /photo http://localhost:2283
-    tailscale serve https:443 /video http://localhost:8096
     # tailscale funnelをバックグラウンドで起動
-    tailscale funnel 443 on
+    tailscale funnel --bg http://localhost:5000
     # touchコマンドでfunnel_initializedファイルを作成
     touch .funnel_initialized
 fi
 . ./venv/bin/activate
 pip install -r requirements.txt
-exec ./venv/bin/gunicorn -k gevent -w 2 \
+exec ./venv/bin/gunicorn -k gevent -w 4 \
     --timeout 300 \
     --keep-alive 10 \
     -b 0.0.0.0:5000 \

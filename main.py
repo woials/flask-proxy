@@ -1,3 +1,5 @@
+from gevent import monkey
+monkey.patch_all()
 from datetime import timedelta
 from dotenv import load_dotenv
 from flask import Blueprint, Flask, flash,render_template,redirect, request, session,url_for,send_from_directory
@@ -13,8 +15,9 @@ from werkzeug.security import generate_password_hash,check_password_hash
 import os
 
 app = Flask(__name__)
-app.config['SERVER_NAME']="school-pc.tailebd8e7.ts.net"
+app.config['SERVER_NAME']="home.tailebd8e7.ts.net"
 Compress(app)
+app.config['COMPRESS_MIMETYPE']=['text/html','text/css','text/xml','application/json','application/javascript']
 app.register_blueprint(youtube, url_prefix='/youtube')
 app.register_blueprint(weather, url_prefix='/weather')
 # app.register_blueprint(radio,url_prefix='/radio')
@@ -70,7 +73,7 @@ def login_require_for_all_pages():
     if not current_user.is_authenticated and request.endpoint not in allowed_endpoints:
         return redirect(url_for('login'))
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/site-login', methods=['GET','POST'])
 def login():
     if request.method=='POST':
         username=request.form.get('username')
