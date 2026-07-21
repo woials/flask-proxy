@@ -1,8 +1,8 @@
 services:
-  app:
+  flask-app:
     build: .
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     volumes:
       - .:/app  # ← これが魔法の一行：ホストの「.」をコンテナの「/app」に同期
     environment:

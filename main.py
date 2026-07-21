@@ -15,7 +15,7 @@ from werkzeug.security import generate_password_hash,check_password_hash
 import os
 
 app = Flask(__name__)
-app.config['SERVER_NAME']="home.tailebd8e7.ts.net"
+app.config['SERVER_NAME']=os.getenv("SERVER_NAME")
 Compress(app)
 app.config['COMPRESS_MIMETYPE']=['text/html','text/css','text/xml','application/json','application/javascript']
 app.register_blueprint(youtube, url_prefix='/youtube')

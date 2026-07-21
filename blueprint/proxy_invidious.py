@@ -2,7 +2,7 @@ import re
 
 from flask import Response, request
 import requests
-INVIDIOUS_URL="http://localhost:3000"
+INVIDIOUS_URL="http://invidious:3000"
 def proxy(path):
     print(f"DEBUG path={path!r}")
     url=f"{INVIDIOUS_URL}/{path}"

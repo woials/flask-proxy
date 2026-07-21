@@ -25,10 +25,12 @@
     });
 
     originalOn('ended', async () => {
+        const t0 = performance.now()
         const nextId = await getNextVideoIdInPlaylist();
         if (!nextId) return;
 
         const source = await getPlaybackSource(nextId);
+        console.log("[timing] fetch to source ready:", performance.now() - t0, "ms")
         if (!source) return;
 
         player.src(source);
@@ -69,10 +71,10 @@
             published.textContent = "公開日 " + publishedDate.toLocaleDateString();
         }
 
-        const description=document.getElementById("descriptionWrapper");
-        description.textContent=json.description;
+        const description = document.getElementById("descriptionWrapper");
+        description.textContent = json.description;
 
-        
+
     }
 
     async function getNextVideoIdInPlaylist() {
@@ -91,12 +93,15 @@
     }
 
     async function getPlaybackSource(videoId) {
-        const res = await fetch(`/api/v1/videos/${videoId}?local=true`);
+        const res = await fetch(`/watch?v=${videoId}&local=1`);
         if (!res.ok) return null;
-        const data = await res.json();
-        console.log('[watch_override] formatStreams:', data.formatStreams);
-        const fmt = data.formatStreams.find(f => f.itag === "18" || f.itag === 18);
-        if (!fmt) return null;
-        return { src: fmt.url, type: fmt.type || 'video/mp4; codecs="avc1.42001E, mp4a.40.2"' };
+        const html = await res.text();
+
+        // itag=18ではなく、実際に毎回確実に動いているDASHマニフェストの方を狙う
+        const match = html.match(/<source src="(\/companion\/api\/manifest\/dash\/id\/[^"]+)"/);
+        if (!match) return null;
+
+        const src = match[1].replace(/&amp;/g, '&');
+        return { src, type: 'application/dash+xml' };
     }
 })();
